@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Hàm kiểm tra User đang đăng nhập có phải Admin không
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Collection: users
+    match /users/{userId} {
+      // Bất kỳ ai đăng nhập cũng có thể đọc thông tin cơ bản của họ
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Chỉ Admin được thêm/xóa/sửa user. User chỉ được sửa sđt, tên của mình.
+      allow write: if isAdmin();
+      allow update: if request.auth != null && request.auth.uid == userId 
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone']);
+    }
+
+    // Collection: attendance
+    match /attendance/{docId} {
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // Collection: requests (Đơn từ)
+    match /requests/{docId} {
+      // Nhân viên chỉ thấy đơn của mình, Admin thấy tất cả
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+      // Nhân viên tự tạo đơn cho mình
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Chỉ admin mới có quyền Duyệt/Từ chối (Cập nhật status). Nhân viên có thể rút đơn nếu đang Pending.
+      allow update: if request.auth != null && (isAdmin() || (request.auth.uid == resource.data.userId && resource.data.status == 'pending'));
+      allow delete: if isAdmin();
+    }
+    
+    // Collection: notifications (Thông báo)
+    match /notifications/{docId} {
+      // User đọc thông báo của mình
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Bất kỳ thao tác tạo nào từ Admin hoặc trigger tự động (hiện tại cho phép tạo từ client nếu là admin)
+      allow create: if isAdmin();
+      // Cho phép User đánh dấu đã đọc
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.userId);
+    }
+  }
+}
