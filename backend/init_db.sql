@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   fullName VARCHAR(255),
   phone VARCHAR(50),
   role ENUM('admin', 'employee') DEFAULT 'employee',
+  shift_id VARCHAR(50) DEFAULT 'shift_1',
+  hourlyRate INT DEFAULT 25000,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -16,9 +18,14 @@ CREATE TABLE IF NOT EXISTS attendance (
   userId VARCHAR(255) NOT NULL,
   userName VARCHAR(255),
   date DATE NOT NULL,
+  shift_id VARCHAR(50),
   checkInTimeMillis BIGINT,
   checkOutTimeMillis BIGINT,
-  totalHours DECIMAL(5,2),
+  totalHours DECIMAL(5,2) DEFAULT 0,
+  overtime_hours DECIMAL(5,2) DEFAULT 0,
+  late_minutes INT DEFAULT 0,
+  early_leave_minutes INT DEFAULT 0,
+  status ENUM('PRESENT', 'LATE', 'EARLY_LEAVE', 'ABSENT', 'OT', 'LEAVE', 'FORGOT_CHECKOUT') DEFAULT 'PRESENT',
   isValidShift BOOLEAN DEFAULT TRUE,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -54,4 +61,4 @@ CREATE TABLE IF NOT EXISTS settings (
 
 -- Insert default settings
 INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
-('general', '{"factoryLat": 10.762622, "factoryLng": 106.660172, "maxDistance": 500, "shiftStart": "08:00", "shiftEnd": "17:00"}');
+('general', '{"factoryLat": 10.762622, "factoryLng": 106.660172, "maxDistance": 500, "wifiIp": "", "shifts": [{"id": "shift_1", "name": "Ca Hành chính", "startTime": "08:00", "endTime": "17:00"}, {"id": "shift_2", "name": "Ca Đêm", "startTime": "18:00", "endTime": "06:00"}]}');

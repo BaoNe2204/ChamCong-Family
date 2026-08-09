@@ -4,7 +4,7 @@ import { useAuth } from './context/AuthContext';
 import EmployeeView from './pages/EmployeeView';
 import AdminDashboard from './pages/AdminDashboard';
 import EmployeeManagement from './pages/EmployeeManagement';
-import ShiftManagement from './pages/ShiftManagement';
+import SystemSettings from './pages/SystemSettings';
 import Profile from './pages/Profile';
 import AttendanceHistory from './pages/AttendanceHistory';
 import LeaveRequest from './pages/LeaveRequest';
@@ -29,7 +29,12 @@ import EmployeeRequests from './pages/EmployeeRequests';
 import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeProfile from './pages/EmployeeProfile';
 import EmployeeSettings from './pages/EmployeeSettings';
+import ShiftCrud from './pages/ShiftCrud';
 import EmployeeNotifications from './pages/EmployeeNotifications';
+import AdminLayout from './layouts/AdminLayout';
+import AdminCalendarView from './pages/AdminCalendarView';
+import AdminPayroll from './pages/AdminPayroll';
+import AdminTimesheet from './pages/AdminTimesheet';
 
 function App() {
   return (
@@ -52,10 +57,16 @@ function App() {
         </Route>
         
         {/* Route dành cho quản lý (cần đăng nhập và quyền admin) */}
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/employees" element={<AdminRoute><EmployeeManagement /></AdminRoute>} />
-        <Route path="/admin/settings" element={<AdminRoute><ShiftManagement /></AdminRoute>} />
-        <Route path="/admin/requests" element={<AdminRoute><RequestManagement /></AdminRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="employees" element={<EmployeeManagement />} />
+          <Route path="settings" element={<SystemSettings />} />
+          <Route path="shifts" element={<ShiftCrud />} />
+          <Route path="calendar" element={<AdminCalendarView />} />
+          <Route path="timesheet" element={<AdminTimesheet />} />
+          <Route path="payroll" element={<AdminPayroll />} />
+          <Route path="requests" element={<RequestManagement />} />
+        </Route>
         
         {/* Cũ (Legacy) - Tạm giữ lại hoặc xoá đi tuỳ ý */}
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

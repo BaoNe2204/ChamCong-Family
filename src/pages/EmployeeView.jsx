@@ -22,6 +22,8 @@ export default function EmployeeView() {
   const [isReady, setIsReady] = useState(false);
   const [gpsIcon, setGpsIcon] = useState('🟡'); // 🟢, 🟡, 🔴
   const [loadingAction, setLoadingAction] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [nowTick, setNowTick] = useState(new Date());
   
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -32,7 +34,10 @@ export default function EmployeeView() {
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+      setNowTick(new Date());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -96,6 +101,7 @@ export default function EmployeeView() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        setCurrentLocation({ lat: latitude, lng: longitude });
         const distance = getDistanceFromLatLonInM(latitude, longitude, settings.factoryLat, settings.factoryLng);
         
         if (distance <= settings.maxDistance) {
@@ -118,16 +124,21 @@ export default function EmployeeView() {
   }, [dashboardData?.settings]);
 
   const handleCheckIn = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentLocation) return;
     setLoadingAction(true);
-    const result = await checkIn(currentUser.uid, currentUser.email);
-    if (result.success || result.message === "Check in thành công") {
-      alert("Check-in thành công!");
-      fetchDashboardData();
-    } else {
-      alert(result.error || "Có lỗi xảy ra");
+    try {
+      const result = await checkIn(currentUser.uid, currentUser.email, currentLocation.lat, currentLocation.lng);
+      if (result && (result.success || result.message === "Check-in thành công" || result.message === "Check in thành công")) {
+        alert("Check-in thành công!");
+        fetchDashboardData();
+      } else {
+        alert(result?.error || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      alert(error.message || "Lỗi mạng hoặc máy chủ!");
+    } finally {
+      setLoadingAction(false);
     }
-    setLoadingAction(false);
   };
 
   const handleCheckOut = async () => {
@@ -144,14 +155,19 @@ export default function EmployeeView() {
     }
 
     setLoadingAction(true);
-    const result = await checkOut(currentUser.uid);
-    if (result.success || result.message === "Check out thành công") {
-      alert("Check-out thành công!");
-      fetchDashboardData();
-    } else {
-      alert(result.error || "Có lỗi xảy ra");
+    try {
+      const result = await checkOut(currentUser.uid);
+      if (result && (result.success || result.message === "Check-out thành công" || result.message === "Check out thành công")) {
+        alert("Check-out thành công!");
+        fetchDashboardData();
+      } else {
+        alert(result?.error || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      alert(error.message || "Lỗi mạng hoặc máy chủ!");
+    } finally {
+      setLoadingAction(false);
     }
-    setLoadingAction(false);
   };
 
   // Helper functions for UI
@@ -160,21 +176,45 @@ export default function EmployeeView() {
   };
 
   const getShiftProgress = () => {
-    if (!dashboardData?.settings) return { percentage: 0, worked: '0h 0m', left: '0h 0m' };
+    if (!dashboardData?.settings) return { percentage: 0, worked: '0h 0m', left: '0h 0m', shiftStart: '08:00', shiftEnd: '17:00' };
     
-    const { shiftStart, shiftEnd } = dashboardData.settings;
+    const userShiftId = currentUser?.shift_id || 'shift_1';
+    
+    // Tìm ca làm việc từ mảng shifts, nếu không có lấy ca đầu tiên, nếu không có nữa thì dùng mặc định
+    let currentShift = dashboardData.settings.shifts?.find(s => s.id === userShiftId);
+    if (!currentShift && dashboardData.settings.shifts?.length > 0) currentShift = dashboardData.settings.shifts[0];
+    
+    const shiftStart = currentShift?.startTime || '08:00';
+    const shiftEnd = currentShift?.endTime || '17:00';
+    const shiftName = currentShift?.name || 'Ca làm việc';
+    
     const record = dashboardData.todayRecord;
+    
+    let start = new Date(`${new Date().toISOString().split('T')[0]}T${shiftStart}:00`);
+    let end = new Date(`${new Date().toISOString().split('T')[0]}T${shiftEnd}:00`);
+    
+    // Nếu ca làm việc qua đêm (VD: 18:00 đến 06:00 sáng hôm sau)
+    if (end < start) {
+      end.setDate(end.getDate() + 1);
+    }
+
+    // Nếu ca làm việc qua đêm và hiện tại là buổi sáng (đang làm ca đêm từ tối hôm trước)
+    if (nowTick < start && nowTick.getHours() < 12 && start.getHours() > 12) {
+      start.setDate(start.getDate() - 1);
+      end = new Date(`${new Date().toISOString().split('T')[0]}T${shiftEnd}:00`);
+    }
     
     // If not checked in
     if (!record) {
-      return { percentage: 0, worked: '0h 0m', left: '8h 0m' };
+      const totalShiftMs = end - start;
+      const totalH = Math.floor(totalShiftMs / 3600000);
+      const totalM = Math.floor((totalShiftMs % 3600000) / 60000);
+      return { percentage: 0, worked: '0h 0m', left: `${totalH}h ${totalM}m`, shiftStart, shiftEnd };
     }
 
-    const start = new Date(`${new Date().toISOString().split('T')[0]}T${shiftStart}:00`);
-    const end = new Date(`${new Date().toISOString().split('T')[0]}T${shiftEnd}:00`);
     const checkInTime = new Date(record.checkInTimeMillis);
     
-    const now = record.checkOutTimeMillis ? new Date(record.checkOutTimeMillis) : new Date();
+    const now = record.checkOutTimeMillis ? new Date(record.checkOutTimeMillis) : nowTick;
     
     // Calculate worked
     let workedMs = now - checkInTime;
@@ -197,12 +237,26 @@ export default function EmployeeView() {
     return {
       percentage,
       worked: `${workedH}h ${workedM}m`,
-      left: `${leftH}h ${leftM}m`
+      left: `${leftH}h ${leftM}m`,
+      shiftStart,
+      shiftEnd,
+      shiftName
     };
   };
 
   const progress = getShiftProgress();
-  const shiftStatus = !dashboardData?.todayRecord ? 'CHƯA VÀO CA' : dashboardData.todayRecord.checkOutTimeMillis ? 'ĐÃ RA VỀ' : 'ĐANG TRONG CA';
+  
+  // Logic: 
+  // - Nếu ko có hôm nay, hoặc tất cả các phiên hôm nay đều đã checkout -> CHƯA VÀO CA (hoặc ĐÃ RA VỀ nhưng có thể vào ca tiếp)
+  // - Nếu phiên MỚI NHẤT chưa checkout -> ĐANG TRONG CA
+  let shiftStatus = 'CHƯA VÀO CA';
+  if (dashboardData?.todayRecord) {
+     if (dashboardData.todayRecord.checkOutTimeMillis) {
+        shiftStatus = 'ĐÃ RA VỀ'; // Đã checkout phiên gần nhất
+     } else {
+        shiftStatus = 'ĐANG TRONG CA'; // Phiên gần nhất đang mở
+     }
+  }
 
   if (!dashboardData) {
     return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-800 dark:text-white font-bold">Đang tải Dashboard...</div>;
@@ -284,15 +338,74 @@ export default function EmployeeView() {
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 relative z-10">
-              <button onClick={handleCheckIn} disabled={!isReady || shiftStatus !== 'CHƯA VÀO CA' || loadingAction} className="relative group bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 disabled:from-slate-100 disabled:to-slate-100 disabled:text-slate-400 disabled:opacity-70 text-white rounded-2xl py-4 flex flex-col items-center justify-center transition-all overflow-hidden shadow-lg shadow-indigo-500/30 hover:-translate-y-1 hover:shadow-indigo-500/50">
-                <PlayCircle className="w-6 h-6 mb-1 drop-shadow-sm group-disabled:drop-shadow-none" />
-                <span className="font-bold">Check In</span>
-              </button>
-              <button onClick={handleCheckOut} disabled={shiftStatus !== 'ĐANG TRONG CA' || loadingAction} className="relative group bg-gradient-to-br from-rose-500 to-orange-500 hover:from-rose-400 hover:to-orange-400 disabled:from-slate-100 disabled:to-slate-100 disabled:text-slate-400 disabled:opacity-70 text-white rounded-2xl py-4 flex flex-col items-center justify-center transition-all overflow-hidden shadow-lg shadow-rose-500/30 hover:-translate-y-1 hover:shadow-rose-500/50">
-                <StopCircle className="w-6 h-6 mb-1 drop-shadow-sm group-disabled:drop-shadow-none" />
-                <span className="font-bold">Check Out</span>
-              </button>
+            <div className="mt-2 relative z-10">
+              {shiftStatus === 'CHƯA VÀO CA' && (
+                <button 
+                  onClick={handleCheckIn} 
+                  disabled={!isReady || loadingAction} 
+                  className={`w-full relative group disabled:opacity-70 disabled:cursor-not-allowed rounded-[32px] py-8 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden shadow-2xl ${
+                    isReady ? 'shadow-indigo-500/40 hover:shadow-indigo-500/60 hover:-translate-y-2' : 'shadow-none'
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 group-disabled:from-slate-300 group-disabled:to-slate-400 dark:group-disabled:from-slate-700 dark:group-disabled:to-slate-600 transition-colors"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tl from-indigo-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-disabled:hidden"></div>
+                  {isReady && (
+                    <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-indigo-300 to-purple-300 blur-2xl animate-pulse"></div>
+                  )}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 mb-4 rounded-[20px] bg-white/20 flex items-center justify-center backdrop-blur-md group-disabled:bg-slate-500/20 group-hover:scale-110 transition-transform duration-500 shadow-md border border-white/30">
+                      <PlayCircle className="w-8 h-8 text-white group-disabled:text-slate-600 dark:group-disabled:text-slate-300" />
+                    </div>
+                    <span className="text-3xl font-black tracking-widest text-white group-disabled:text-slate-600 dark:group-disabled:text-slate-300 drop-shadow-md">VÀO CA</span>
+                    <span className="text-sm font-bold text-white/90 uppercase tracking-widest mt-2 group-disabled:text-slate-600 dark:group-disabled:text-slate-300">
+                      {!isReady ? 'Chưa tới công ty' : 'Bấm để bắt đầu làm'}
+                    </span>
+                  </div>
+                </button>
+              )}
+
+              {shiftStatus === 'ĐANG TRONG CA' && (
+                <button 
+                  onClick={handleCheckOut} 
+                  disabled={loadingAction} 
+                  className="w-full relative group disabled:opacity-70 disabled:cursor-not-allowed rounded-[32px] py-8 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden shadow-2xl shadow-rose-500/40 hover:shadow-rose-500/60 hover:-translate-y-2"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500 to-orange-500 transition-colors"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tl from-rose-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-rose-300 to-orange-300 blur-2xl animate-pulse"></div>
+                  
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 mb-4 rounded-[20px] bg-white/20 flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform duration-500 shadow-md border border-white/30">
+                      <StopCircle className="w-8 h-8 text-white" />
+                    </div>
+                    <span className="text-3xl font-black tracking-widest text-white drop-shadow-md">RA VỀ</span>
+                    <span className="text-sm font-bold text-white/90 uppercase tracking-widest mt-2">Bấm để chốt công</span>
+                  </div>
+                </button>
+              )}
+
+              {shiftStatus === 'ĐÃ RA VỀ' && (
+                <div className="w-full space-y-3">
+                  <div className="w-full relative rounded-[32px] py-6 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl shadow-emerald-500/20 overflow-hidden">
+                    <div className="absolute inset-0 opacity-30 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+                    <div className="relative z-10 flex flex-col items-center text-center px-4">
+                      <div className="w-12 h-12 mb-3 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shadow-md border border-white/30">
+                        <CheckCircle2 className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-xl md:text-2xl font-black tracking-tight text-white drop-shadow-md mb-1">ĐÃ CHỐT CA GẦN NHẤT!</span>
+                      <span className="text-xs font-bold text-white/90">Bạn đã ra về. Nhấn "Vào Ca Lại" bên dưới nếu muốn tiếp tục làm việc.</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleCheckIn} 
+                    disabled={!isReady || loadingAction} 
+                    className="w-full relative group rounded-2xl py-4 flex flex-row items-center justify-center transition-all duration-300 bg-white dark:bg-slate-700 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                  >
+                    <PlayCircle className="w-5 h-5 mr-2" />
+                    VÀO CA LẠI (PHIÊN MỚI)
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -308,7 +421,7 @@ export default function EmployeeView() {
                  </div>
                  <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Tiến độ ca làm</h3>
                </div>
-               <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-lg text-xs font-bold border border-primary-100">{dashboardData.settings.shiftStart} - {dashboardData.settings.shiftEnd}</span>
+               <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-lg text-xs font-bold border border-primary-100">{progress.shiftName} ({progress.shiftStart} - {progress.shiftEnd})</span>
             </div>
             
             <div className="space-y-4 relative z-10">
@@ -480,22 +593,30 @@ export default function EmployeeView() {
                 {/* Radar sweep */}
                 <div className="absolute w-full h-full border-2 border-primary-500/20 rounded-full animate-ping opacity-20" style={{animationDuration: '3s'}} />
                 
-                {/* Connection line */}
-                <div className="absolute top-1/2 left-1/2 w-16 h-px bg-gradient-to-r from-emerald-500 to-primary-500 -rotate-45 -translate-x-4 -translate-y-4"></div>
+                {/* Connection line SVG */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="mapGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="30%" y1="60%" x2="70%" y2="40%" stroke="url(#mapGradient)" strokeWidth="2" strokeDasharray="4 4" className="opacity-70" />
+                </svg>
 
                 {/* Factory Marker */}
-                <div className="absolute top-[40%] right-[30%] flex flex-col items-center gap-1 z-10">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center border border-primary-200 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                <div className="absolute top-[40%] left-[70%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center border border-primary-200 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
                     <span className="text-xs">🏭</span>
                   </div>
                 </div>
 
                 {/* User Marker */}
-                <div className="absolute bottom-[40%] left-[30%] flex flex-col items-center gap-1 z-10">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                <div className="absolute top-[60%] left-[30%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                     <span className="text-xs">🧑</span>
                   </div>
-                  <div className="bg-slate-800 px-2 py-0.5 rounded text-[8px] font-bold text-white border border-slate-700 whitespace-nowrap shadow-sm">Bạn ở đây</div>
+                  <div className="bg-slate-800 px-2 py-0.5 rounded text-[9px] font-bold text-white border border-slate-700 whitespace-nowrap shadow-sm absolute top-full mt-1.5">Bạn ở đây</div>
                 </div>
 
              </div>

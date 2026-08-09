@@ -5,10 +5,14 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const pool = require('./db');
+const { setupCronJobs } = require('./cronJobs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Start cron jobs
+setupCronJobs(pool);
 
 // Middleware for auth
 const authenticateToken = (req, res, next) => {
@@ -91,13 +95,14 @@ app.post('/api/auth/login', async (req, res) => {
       user: { uid: user.id, email: user.email, role: user.role, fullName: user.fullName } 
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT id as uid, email, role, fullName, phone FROM users WHERE id = ?', [req.user.uid]);
+    const [rows] = await pool.execute('SELECT id as uid, email, role, fullName, phone, shift_id FROM users WHERE id = ?', [req.user.uid]);
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
     res.json(rows[0]);
   } catch (error) {
@@ -110,6 +115,20 @@ app.put('/api/users/profile', authenticateToken, async (req, res) => {
     const { fullName, phone } = req.body;
     await pool.execute('UPDATE users SET fullName = ?, phone = ? WHERE id = ?', [fullName, phone, req.user.uid]);
     res.json({ message: "Cập nhật thành công" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update push token
+app.post('/api/users/push-token', authenticateToken, async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    await pool.execute(
+      'UPDATE users SET pushToken = ? WHERE id = ?',
+      [pushToken, req.user.uid]
+    );
+    res.json({ message: "Lưu push token thành công" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -137,27 +156,155 @@ app.put('/api/users/change-password', authenticateToken, async (req, res) => {
   }
 });
 
-// --- ATTENDANCE APIs ---
-app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
+// --- SETTINGS APIs ---
+app.get('/api/settings/:key', authenticateToken, async (req, res) => {
   try {
-    const today = getVietnamDateString();
-    
-    // Check if already checked in today
-    const [existing] = await pool.execute(
-      'SELECT id FROM attendance WHERE userId = ? AND date = ?',
-      [req.user.uid, today]
+    const [rows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = ?', [req.params.key]);
+    if (rows.length === 0) return res.status(404).json({ error: "Settings not found" });
+    let value = rows[0].setting_value;
+    if (typeof value === 'string') {
+      try { value = JSON.parse(value); } catch(e) {}
+    }
+    res.json(value);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/settings/:key', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const value = req.body;
+    // Insert or update (UPSERT)
+    await pool.execute(
+      'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+      [req.params.key, JSON.stringify(value), JSON.stringify(value)]
     );
-    
-    if (existing.length > 0) {
-      return res.status(400).json({ error: "Bạn đã check in hôm nay rồi!" });
+    res.json({ message: "Cập nhật cấu hình thành công" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- ATTENDANCE APIs ---
+app.get('/api/attendance/check-network', authenticateToken, async (req, res) => {
+  try {
+    const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+    if (settingRows.length === 0) {
+      return res.json({ requireWifi: false, isConnected: true });
+    }
+    let settings = settingRows[0].setting_value;
+    if (typeof settings === 'string') {
+      try { settings = JSON.parse(settings); } catch(e) {}
+    }
+
+    if (settings.requireWifi && settings.wifiIp && settings.wifiIp.trim() !== '') {
+      const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+      const cleanClientIp = clientIp.includes('::ffff:') ? clientIp.split('::ffff:')[1] : clientIp;
+      const targetIp = settings.wifiIp.trim();
+      
+      if (cleanClientIp !== targetIp) {
+        return res.json({ requireWifi: true, isConnected: false, ip: cleanClientIp });
+      } else {
+        return res.json({ requireWifi: true, isConnected: true, ip: cleanClientIp });
+      }
     }
     
-    await pool.execute(
-      'INSERT INTO attendance (userId, userName, date, checkInTimeMillis) VALUES (?, ?, ?, ?)',
-      [req.user.uid, req.user.email, today, Date.now()]
+    return res.json({ requireWifi: false, isConnected: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    
+    // 1. Lấy cấu hình hệ thống
+    const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+    if (settingRows.length === 0) {
+      return res.status(500).json({ error: "Chưa cấu hình hệ thống" });
+    }
+    let settings = settingRows[0].setting_value;
+    if (typeof settings === 'string') {
+      try { settings = JSON.parse(settings); } catch(e) {}
+    }
+    
+    // 2. Xác thực WiFi (IP Công ty)
+      if (settings.requireWifi && settings.wifiIp && settings.wifiIp.trim() !== '') {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+        const cleanClientIp = clientIp.includes('::ffff:') ? clientIp.split('::ffff:')[1] : clientIp;
+        const targetIp = settings.wifiIp.trim();
+        
+        if (cleanClientIp !== targetIp) {
+          return res.status(403).json({ error: `Bảo mật: Vui lòng kết nối WiFi công ty để chấm công. (IP của bạn: ${cleanClientIp})` });
+        }
+      }
+    
+    // 3. Xác thực GPS (Haversine)
+    if (!lat || !lng) {
+      return res.status(400).json({ error: "Thiếu tọa độ GPS" });
+    }
+    const R = 6371e3; // metres
+    const dLat = (settings.factoryLat - lat) * Math.PI / 180;
+    const dLon = (settings.factoryLng - lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat * Math.PI / 180) * Math.cos(settings.factoryLat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    
+    if (distance > settings.maxDistance) {
+      return res.status(403).json({ error: `Bạn đang ở quá xa công ty (Cách ${Math.round(distance)}m). Không thể chấm công.` });
+    }
+
+    const today = getVietnamDateString();
+    
+    // 4. Lấy shift_id hiện tại của user (Kiểm tra xem hôm nay có đổi ca không)
+    const [dailyRows] = await pool.execute('SELECT shift_id FROM daily_shifts WHERE userId = ? AND date = ?', [req.user.uid, today]);
+    let shift_id = 'shift_1';
+    
+    if (dailyRows.length > 0) {
+      shift_id = dailyRows[0].shift_id;
+    } else {
+      const [userRows] = await pool.execute('SELECT shift_id FROM users WHERE id = ?', [req.user.uid]);
+      shift_id = userRows[0]?.shift_id || 'shift_1';
+    }
+
+    // 5. Kiểm tra có phiên nào đang mở không (chưa check-out)
+    const [existingOpen] = await pool.execute(
+      'SELECT id FROM attendance WHERE userId = ? AND checkOutTimeMillis IS NULL',
+      [req.user.uid]
     );
     
-    res.json({ message: "Check in thành công" });
+    if (existingOpen.length > 0) {
+      return res.status(400).json({ error: "Bạn đang có một phiên làm việc chưa check-out!" });
+    }
+    
+    // 6. Tính toán đi trễ (late_minutes) và chặn Check-in sớm
+    let late_minutes = 0;
+    const currentShift = settings.shifts?.find(s => s.id === shift_id) || settings.shifts?.[0];
+    if (currentShift) {
+      const now = new Date();
+      const [sh, sm] = currentShift.startTime.split(':');
+      const shiftStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), Number(sh), Number(sm), 0);
+      
+      const diffMs = now.getTime() - shiftStartDate.getTime();
+      
+      // Chặn check-in sớm quá 30 phút
+      if (diffMs < -30 * 60 * 1000) {
+        return res.status(403).json({ error: `Chưa đến giờ làm việc. Bạn chỉ được Check-in sớm tối đa 30 phút trước ca (${currentShift.startTime}).` });
+      }
+
+      if (diffMs > 0) { // Đi trễ
+        late_minutes = Math.floor(diffMs / 60000);
+      }
+    }
+
+    // 7. Tạo phiên mới
+    await pool.execute(
+      'INSERT INTO attendance (userId, userName, date, shift_id, checkInTimeMillis, status, late_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [req.user.uid, req.user.email, today, shift_id, Date.now(), 'PRESENT', late_minutes]
+    );
+    
+    res.json({ message: "Check-in thành công" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -165,35 +312,77 @@ app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
 
 app.post('/api/attendance/checkout', authenticateToken, async (req, res) => {
   try {
-    const today = getVietnamDateString();
-    
+    // 1. Tìm phiên đang mở
     const [existing] = await pool.execute(
-      'SELECT id, checkInTimeMillis FROM attendance WHERE userId = ? AND date = ?',
-      [req.user.uid, today]
+      'SELECT * FROM attendance WHERE userId = ? AND checkOutTimeMillis IS NULL ORDER BY checkInTimeMillis DESC LIMIT 1',
+      [req.user.uid]
     );
     
     if (existing.length === 0) {
-      return res.status(400).json({ error: "Chưa check in hôm nay!" });
+      return res.status(400).json({ error: "Không tìm thấy phiên làm việc nào chưa check-out!" });
     }
     
     const record = existing[0];
     const checkOutTimeMillis = Date.now();
     const durationMs = checkOutTimeMillis - record.checkInTimeMillis;
-    const totalHours = (durationMs / (1000 * 60 * 60)).toFixed(2);
+    const totalHours = (durationMs / (1000 * 60 * 60));
     
-    // Get shift end from settings
-    const [settings] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
-    const shiftSettings = JSON.parse(settings[0].setting_value);
+    // 2. Đọc cấu hình ca làm việc
+    const [settingsRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+    const settings = settingsRows.length > 0 ? JSON.parse(settingsRows[0].setting_value) : {};
     
-    const nowStr = new Date().toLocaleTimeString('en-US', {hour12:false, timeZone: 'Asia/Ho_Chi_Minh'});
-    const isValidShift = nowStr >= shiftSettings.shiftEnd;
+    const currentShift = settings.shifts?.find(s => s.id === record.shift_id) || settings.shifts?.[0];
+    
+    let overtime_hours = 0;
+    let early_leave_minutes = 0;
+    let status = record.status || 'PRESENT';
+
+    if (currentShift) {
+      const checkInDate = new Date(record.checkInTimeMillis);
+      const checkOutDate = new Date(checkOutTimeMillis);
+      
+      const [sh, sm] = currentShift.startTime.split(':');
+      const [eh, em] = currentShift.endTime.split(':');
+      
+      let shiftStartDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate(), Number(sh), Number(sm), 0);
+      let shiftEndDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate(), Number(eh), Number(em), 0);
+      
+      // Handle overnight shift
+      if (shiftEndDate < shiftStartDate) {
+        shiftEndDate.setDate(shiftEndDate.getDate() + 1);
+      }
+      
+      // Tính về sớm (Early leave)
+      if (checkOutDate < shiftEndDate) {
+        early_leave_minutes = Math.floor((shiftEndDate.getTime() - checkOutDate.getTime()) / 60000);
+      }
+      
+      // Tính overtime: tính theo số giờ làm việc thực tế sau khi hết ca, 
+      let actualOTStartTime = shiftEndDate;
+      if (checkInDate > shiftEndDate) {
+          actualOTStartTime = checkInDate;
+      }
+      if (checkOutDate > actualOTStartTime) {
+        overtime_hours = (checkOutDate.getTime() - actualOTStartTime.getTime()) / 3600000;
+      }
+
+      // Đánh giá lại trạng thái
+      if (early_leave_minutes > 0 && record.late_minutes > 0) {
+         // Vừa trễ vừa sớm
+         status = 'LATE'; // Ưu tiên LATE hoặc tuỳ logic
+      } else if (early_leave_minutes > 0) {
+         status = 'EARLY_LEAVE';
+      } else if (overtime_hours > 0) {
+         status = 'OT';
+      }
+    }
     
     await pool.execute(
-      'UPDATE attendance SET checkOutTimeMillis = ?, totalHours = ?, isValidShift = ? WHERE id = ?',
-      [checkOutTimeMillis, parseFloat(totalHours), isValidShift, record.id]
+      'UPDATE attendance SET checkOutTimeMillis = ?, totalHours = ?, overtime_hours = ?, early_leave_minutes = ?, status = ?, isValidShift = 1 WHERE id = ?',
+      [checkOutTimeMillis, totalHours.toFixed(2), overtime_hours.toFixed(2), early_leave_minutes, status, record.id]
     );
     
-    res.json({ message: "Check out thành công", totalHours, isValidShift });
+    res.json({ message: "Check-out thành công", totalHours: totalHours.toFixed(2), status });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -273,6 +462,33 @@ app.get('/api/attendance/stats', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/attendance/my-schedule', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const dateObj = new Date();
+    const currentYear = dateObj.getFullYear();
+    const currentMonth = dateObj.getMonth() + 1;
+    const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}%`;
+
+    // Lấy default shift
+    const [userRows] = await pool.execute('SELECT shift_id FROM users WHERE id = ?', [userId]);
+    const defaultShiftId = userRows[0]?.shift_id || 'shift_1';
+
+    // Lấy daily_shifts trong tháng
+    const [dailyRows] = await pool.execute(
+      'SELECT date, shift_id FROM daily_shifts WHERE userId = ? AND date LIKE ?',
+      [userId, currentMonthStr]
+    );
+
+    res.json({
+      defaultShiftId,
+      dailyShifts: dailyRows
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.uid;
@@ -281,58 +497,67 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
     const vnDate = new Date(dateObj.getTime() + 7 * 60 * 60 * 1000);
     const currentMonthStr = `${vnDate.getUTCFullYear()}-${(vnDate.getUTCMonth() + 1).toString().padStart(2, '0')}%`;
 
-    // 1. Get user base salary
-    const [userRows] = await pool.execute('SELECT baseSalary FROM users WHERE id = ?', [userId]);
-    const baseSalary = userRows[0]?.baseSalary || 6000000;
+    // 1. Get user info
+    const [userRows] = await pool.execute('SELECT email, fullName, role, baseSalary, hourlyRate FROM users WHERE id = ?', [userId]);
+    const userInfo = userRows[0] || {};
+    const baseSalary = userInfo.baseSalary || 6000000;
 
     // 2. Get Settings
     const [settingsRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
     const settings = settingsRows.length > 0 ? JSON.parse(settingsRows[0].setting_value) : { shiftStart: "08:00", shiftEnd: "17:00" };
 
-    // 3. Get Today's Status
-    const [todayRows] = await pool.execute('SELECT * FROM attendance WHERE userId = ? AND date = ?', [userId, today]);
+    // 3. Get Today's Status (Latest session)
+    const [todayRows] = await pool.execute('SELECT * FROM attendance WHERE userId = ? AND date = ? ORDER BY checkInTimeMillis DESC LIMIT 1', [userId, today]);
     const todayRecord = todayRows[0] || null;
 
     // 4. Get Last 5 Days History
     const [historyRows] = await pool.execute(
-      'SELECT date, checkInTimeMillis, checkOutTimeMillis, totalHours FROM attendance WHERE userId = ? ORDER BY date DESC LIMIT 5',
+      'SELECT * FROM attendance WHERE userId = ? ORDER BY date DESC LIMIT 5',
       [userId]
     );
 
+    // 5. Get Unread Notifications Count
+    const [notifRows] = await pool.execute(
+      'SELECT COUNT(*) as count FROM notifications WHERE userId = ? AND isRead = FALSE',
+      [userId]
+    );
+    const unreadCount = notifRows[0]?.count || 0;
+
     // 5. Monthly Stats
     const [monthRows] = await pool.execute(
-      'SELECT date, checkInTimeMillis, totalHours FROM attendance WHERE userId = ? AND date LIKE ?',
+      'SELECT date, status, late_minutes, early_leave_minutes, overtime_hours, checkInTimeMillis, checkOutTimeMillis, totalHours FROM attendance WHERE userId = ? AND date LIKE ?',
       [userId, currentMonthStr]
     );
 
     let onTime = 0;
     let late = 0;
     let totalHoursMonth = 0;
+    let otHours = 0;
 
-    // Calculate late vs on-time
-    const shiftStartTime = new Date(`1970-01-01T${settings.shiftStart}:00Z`).getTime(); // approximate for comparison if using only hours/mins, but better to compare HH:mm strings
-
+    // Group by date to handle multiple sessions per day
+    const daysMap = {};
     monthRows.forEach(row => {
-      const checkInDate = new Date(row.checkInTimeMillis);
-      const checkInStr = checkInDate.toLocaleTimeString('en-US', {hour12:false, timeZone: 'Asia/Ho_Chi_Minh'});
-      // If checkIn > shiftStart (e.g. 08:05 > 08:00), it's late.
-      // Note: simple string comparison works for HH:mm:ss if same format
-      if (checkInStr > (settings.shiftStart + ":00")) {
+      const dateStr = typeof row.date === 'string' ? row.date : row.date.toISOString().split('T')[0];
+      if (!daysMap[dateStr]) {
+         daysMap[dateStr] = { late_minutes: 0, early_leave_minutes: 0, totalHours: 0, overtime_hours: 0, isLate: false };
+      }
+      daysMap[dateStr].late_minutes += (row.late_minutes || 0);
+      daysMap[dateStr].early_leave_minutes += (row.early_leave_minutes || 0);
+      daysMap[dateStr].totalHours += parseFloat(row.totalHours || 0);
+      daysMap[dateStr].overtime_hours += parseFloat(row.overtime_hours || 0);
+      if (row.status === 'LATE' || row.late_minutes > 0) {
+         daysMap[dateStr].isLate = true;
+      }
+    });
+
+    Object.values(daysMap).forEach(day => {
+      if (day.isLate) {
         late++;
       } else {
         onTime++;
       }
-      totalHoursMonth += parseFloat(row.totalHours || 0);
-    });
-
-    // 6. Calculate OT and Salary
-    // Standard working hours per month = 26 days * 8 hours = 208 hours
-    // Simplified: Any hours over 8 per day is OT.
-    let otHours = 0;
-    monthRows.forEach(row => {
-      if (row.totalHours > 8) {
-        otHours += (row.totalHours - 8);
-      }
+      totalHoursMonth += day.totalHours;
+      otHours += day.overtime_hours;
     });
 
     const hourlyRate = baseSalary / 26 / 8;
@@ -349,6 +574,8 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
     res.json({
       settings,
       baseSalary,
+      userInfo,
+      unreadCount,
       todayRecord,
       history: historyRows,
       stats: {
@@ -357,6 +584,7 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
         daysOff,
         otHours: parseFloat(otHours.toFixed(1)),
         totalHoursMonth: parseFloat(totalHoursMonth.toFixed(1)),
+        totalShiftsMonth: monthRows.length,
         calculatedSalary: Math.round(calculatedSalary),
         calculatedOT: Math.round(calculatedOT),
         totalSalary: Math.round(totalSalary)
@@ -370,14 +598,14 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
 // --- REQUESTS APIs ---
 app.post('/api/requests', authenticateToken, async (req, res) => {
   try {
-    const { type, date, reason } = req.body;
+    const { type, date, reason, targetUserId, targetUserName } = req.body;
     if (!type || !date || !reason) {
       return res.status(400).json({ error: "Vui lòng điền đầy đủ thông tin (type, date, reason)" });
     }
     
     await pool.execute(
-      'INSERT INTO requests (userId, userName, type, date, reason, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.uid, req.user.email, type, date, reason, 'pending']
+      'INSERT INTO requests (userId, userName, type, date, reason, status, targetUserId, targetUserName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.uid, req.user.email, type, date, reason, 'pending', targetUserId || null, targetUserName || null]
     );
     
     res.json({ message: "Gửi đơn thành công" });
@@ -398,10 +626,19 @@ app.get('/api/requests/my', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/employees/list', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT id, fullName, email FROM users WHERE id != ?', [req.user.uid]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- ADMIN USERS APIs ---
 app.get('/api/users', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT id, email, fullName, role, phone FROM users');
+    const [rows] = await pool.execute('SELECT id, email, fullName, role, phone, shift_id, hourlyRate FROM users');
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -412,6 +649,422 @@ app.delete('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
   try {
     await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
     res.json({ message: "Đã xoá nhân viên" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { email, password, fullName, phone, role, shift_id, hourlyRate } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Thiếu email hoặc mật khẩu" });
+    
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+    const id = Date.now().toString();
+    
+    await pool.execute(
+      'INSERT INTO users (id, email, password_hash, role, fullName, phone, shift_id, hourlyRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, email, hash, role || 'employee', fullName || '', phone || '', shift_id || 'shift_1', hourlyRate || 0]
+    );
+    
+    res.json({ message: "Thêm nhân viên thành công" });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      res.status(400).json({ error: "Email đã tồn tại" });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+app.put('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { fullName, phone, role, password, shift_id, hourlyRate } = req.body;
+    
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(password, salt);
+      await pool.execute(
+        'UPDATE users SET fullName = ?, phone = ?, role = ?, password_hash = ?, shift_id = ?, hourlyRate = ? WHERE id = ?',
+        [fullName, phone, role, hash, shift_id || 'shift_1', hourlyRate || 0, req.params.id]
+      );
+    } else {
+      await pool.execute(
+        'UPDATE users SET fullName = ?, phone = ?, role = ?, shift_id = ?, hourlyRate = ? WHERE id = ?',
+        [fullName, phone, role, shift_id || 'shift_1', hourlyRate || 0, req.params.id]
+      );
+    }
+    
+    res.json({ message: "Cập nhật nhân viên thành công" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/attendance/payroll/:month/:year', authenticateToken, async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    const userId = req.user.uid;
+    
+    // Get user details
+    const [users] = await pool.execute('SELECT hourlyRate FROM users WHERE id = ?', [userId]);
+    const hourlyRate = users[0]?.hourlyRate || 0;
+    
+    // Get all attendance records for the month
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDateObj = new Date(year, month, 0);
+    const endDate = `${year}-${month.padStart(2, '0')}-${endDateObj.getDate().toString().padStart(2, '0')}`;
+    
+    const [attendance] = await pool.execute(
+      'SELECT date, totalHours, isValidShift FROM attendance WHERE userId = ? AND date >= ? AND date <= ? AND checkOutTimeMillis IS NOT NULL',
+      [userId, startDate, endDate]
+    );
+
+    const daysMap = {};
+    attendance.forEach(record => {
+       const d = typeof record.date === 'string' ? record.date : record.date.toISOString().split('T')[0];
+       if (!daysMap[d]) {
+          daysMap[d] = { totalHours: 0, isValid: true };
+       }
+       daysMap[d].totalHours += parseFloat(record.totalHours || 0);
+       if (!record.isValidShift) daysMap[d].isValid = false;
+    });
+
+    const totalDays = Object.keys(daysMap).length;
+    let totalHours = 0;
+    let validDays = 0;
+    let errorDays = 0;
+    
+    Object.values(daysMap).forEach(day => {
+      totalHours += day.totalHours;
+      if (day.isValid) validDays++;
+      else errorDays++;
+    });
+    
+    const salary = totalHours * hourlyRate;
+    
+    res.json({
+      hourlyRate,
+      totalDays,
+      validDays,
+      errorDays,
+      totalHours: Math.round(totalHours * 10) / 10,
+      salary
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    
+    // Get settings for otMultiplier
+    const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+    let otMultiplier = 1.5;
+    if (settingRows.length > 0) {
+      try {
+        const settings = JSON.parse(settingRows[0].setting_value);
+        if (settings.otMultiplier) otMultiplier = parseFloat(settings.otMultiplier);
+      } catch(e) {}
+    }
+
+    // Get all users
+    const [users] = await pool.execute('SELECT id, email, fullName, role, hourlyRate FROM users');
+    
+    // Get payroll adjustments
+    const [adjustments] = await pool.execute(
+      'SELECT * FROM payroll_adjustments WHERE month = ? AND year = ?',
+      [month, year]
+    );
+    
+    // Get all attendance records for the month
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    // Last day of month
+    const endDateObj = new Date(year, month, 0);
+    const endDate = `${year}-${month.padStart(2, '0')}-${endDateObj.getDate().toString().padStart(2, '0')}`;
+    
+    const [attendance] = await pool.execute(
+      'SELECT userId, date, totalHours, overtime_hours, isValidShift FROM attendance WHERE date >= ? AND date <= ? AND checkOutTimeMillis IS NOT NULL',
+      [startDate, endDate]
+    );
+
+    // Calculate payroll for each user
+    const payrollList = users.map(user => {
+      const userRecords = attendance.filter(a => a.userId === user.id);
+      
+      const daysMap = {};
+      userRecords.forEach(record => {
+         const d = typeof record.date === 'string' ? record.date : record.date.toISOString().split('T')[0];
+         if (!daysMap[d]) {
+            daysMap[d] = { totalHours: 0, overtimeHours: 0, isValid: true };
+         }
+         daysMap[d].totalHours += parseFloat(record.totalHours || 0);
+         daysMap[d].overtimeHours += parseFloat(record.overtime_hours || 0);
+         if (!record.isValidShift) daysMap[d].isValid = false;
+      });
+
+      const totalDays = Object.keys(daysMap).length;
+      let totalHours = 0;
+      let overtimeHours = 0;
+      let validDays = 0;
+      let errorDays = 0;
+      
+      Object.values(daysMap).forEach(day => {
+        totalHours += day.totalHours;
+        overtimeHours += day.overtimeHours;
+        if (day.isValid) validDays++;
+        else errorDays++;
+      });
+      
+      const baseHours = Math.max(0, totalHours - overtimeHours);
+      
+      const userAdj = adjustments.find(adj => adj.userId === user.id) || {};
+      const manualOtHours = parseFloat(userAdj.manualOtHours || 0);
+      const bonus = parseInt(userAdj.bonus || 0);
+      const penalty = parseInt(userAdj.penalty || 0);
+      const finalHourlyRate = userAdj.hourlyRate !== undefined && userAdj.hourlyRate !== null ? userAdj.hourlyRate : (user.hourlyRate || 0);
+      
+      const finalOvertimeHours = overtimeHours + manualOtHours;
+      
+      const baseSalary = baseHours * finalHourlyRate;
+      const otSalary = finalOvertimeHours * finalHourlyRate * otMultiplier;
+      const totalSalary = baseSalary + otSalary + bonus - penalty;
+      
+      return {
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName || '',
+        role: user.role,
+        hourlyRate: finalHourlyRate,
+        totalDays,
+        validDays,
+        errorDays,
+        baseHours: Math.round(baseHours * 10) / 10,
+        overtimeHours: Math.round(finalOvertimeHours * 10) / 10,
+        baseSalary: Math.round(baseSalary),
+        otSalary: Math.round(otSalary),
+        bonus,
+        penalty,
+        salary: Math.round(totalSalary)
+      };
+    });
+    
+    res.json(payrollList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/payroll/adjust', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { userId, month, year, manualOtHours, bonus, penalty, hourlyRate } = req.body;
+    if (!userId || !month || !year) {
+      return res.status(400).json({ error: "Missing userId, month, or year" });
+    }
+    
+    // Check if adjustment exists
+    const [existing] = await pool.execute(
+      'SELECT id FROM payroll_adjustments WHERE userId = ? AND month = ? AND year = ?',
+      [userId, month, year]
+    );
+    
+    if (existing.length > 0) {
+      await pool.execute(
+        'UPDATE payroll_adjustments SET manualOtHours = ?, bonus = ?, penalty = ?, hourlyRate = ? WHERE userId = ? AND month = ? AND year = ?',
+        [manualOtHours || 0, bonus || 0, penalty || 0, hourlyRate !== undefined ? hourlyRate : null, userId, month, year]
+      );
+    } else {
+      await pool.execute(
+        'INSERT INTO payroll_adjustments (userId, month, year, manualOtHours, bonus, penalty, hourlyRate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userId, month, year, manualOtHours || 0, bonus || 0, penalty || 0, hourlyRate !== undefined ? hourlyRate : null]
+      );
+    }
+    
+    res.json({ message: "Đã lưu điều chỉnh thành công" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/timesheet/:month/:year', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    
+    // Get all users
+    const [users] = await pool.execute('SELECT id, email, fullName, role FROM users');
+    
+    // Get all attendance records for the month
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDateObj = new Date(year, month, 0);
+    const endDate = `${year}-${month.padStart(2, '0')}-${endDateObj.getDate().toString().padStart(2, '0')}`;
+    
+    const [attendance] = await pool.execute(
+      'SELECT userId, date, totalHours, isValidShift FROM attendance WHERE date >= ? AND date <= ? AND checkOutTimeMillis IS NOT NULL',
+      [startDate, endDate]
+    );
+
+    const timesheetList = users.map(user => {
+      const userRecords = attendance.filter(a => a.userId === user.id);
+      const days = {};
+      
+      let totalDays = 0;
+      let totalHours = 0;
+
+      userRecords.forEach(record => {
+         const d = typeof record.date === 'string' ? record.date.substring(0, 10) : record.date.toISOString().split('T')[0];
+         if (!days[d]) {
+            days[d] = { totalHours: 0, isValid: true };
+         }
+         days[d].totalHours += parseFloat(record.totalHours || 0);
+         if (!record.isValidShift) days[d].isValid = false;
+      });
+
+      Object.values(days).forEach(day => {
+        totalDays += 1;
+        totalHours += day.totalHours;
+      });
+
+      return {
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName || '',
+        days,
+        totalDays,
+        totalHours: Math.round(totalHours * 10) / 10
+      };
+    });
+    
+    res.json(timesheetList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/attendance', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { startStr, endStr } = req.query;
+    
+    let queryStr = 'SELECT * FROM attendance';
+    let params = [];
+    
+    if (startStr && endStr) {
+      queryStr += ' WHERE date >= ? AND date <= ?';
+      params.push(startStr, endStr);
+    }
+    
+    queryStr += ' ORDER BY date DESC';
+    
+    const [rows] = await pool.execute(queryStr, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET records for specific user in specific month/year
+app.get('/api/admin/attendance/:userId/:month/:year', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { userId, month, year } = req.params;
+    const startStr = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endStr = `${year}-${String(month).padStart(2, '0')}-31`;
+    
+    const [rows] = await pool.execute(
+      'SELECT * FROM attendance WHERE userId = ? AND date >= ? AND date <= ? ORDER BY date ASC',
+      [userId, startStr, endStr]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// CREATE, UPDATE, or DELETE attendance record by admin
+app.post('/api/admin/attendance/update', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { id, userId, date, action, checkInTime, checkOutTime, shift_id } = req.body;
+    
+    if (action === 'delete') {
+      if (id) {
+        await pool.execute('DELETE FROM attendance WHERE id = ?', [id]);
+      } else {
+        await pool.execute('DELETE FROM attendance WHERE userId = ? AND date = ?', [userId, date]);
+      }
+      return res.json({ message: "Đã xoá bản ghi chấm công" });
+    }
+    
+    if (action === 'update' || action === 'create') {
+      let checkInTimeStr = checkInTime || '08:00:00';
+      let checkOutTimeStr = checkOutTime || '17:00:00';
+      
+      let checkInDate = new Date(`${date}T${checkInTimeStr}`);
+      let checkOutDate = new Date(`${date}T${checkOutTimeStr}`);
+      
+      if (checkOutDate < checkInDate) {
+        checkOutDate.setDate(checkOutDate.getDate() + 1);
+      }
+      
+      const totalHours = (checkOutDate - checkInDate) / 3600000;
+      
+      // Determine user's shift if not provided
+      let finalShiftId = shift_id;
+      if (!finalShiftId) {
+         const [userRows] = await pool.execute('SELECT shift_id, fullName, email FROM users WHERE id = ?', [userId]);
+         finalShiftId = userRows[0]?.shift_id || 'shift_1';
+      }
+
+      // Calculate shift stats
+      const [settingsRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+      const settings = settingsRows.length > 0 ? JSON.parse(settingsRows[0].setting_value) : {};
+      const currentShift = settings.shifts?.find(s => s.id === finalShiftId) || settings.shifts?.[0];
+      
+      let overtime_hours = 0;
+      let late_minutes = 0;
+      let early_leave_minutes = 0;
+      let status = 'PRESENT';
+
+      if (currentShift) {
+         const [sh, sm] = currentShift.startTime.split(':');
+         const [eh, em] = currentShift.endTime.split(':');
+         let shiftStartDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate(), Number(sh), Number(sm), 0);
+         let shiftEndDate = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate(), Number(eh), Number(em), 0);
+         if (shiftEndDate < shiftStartDate) shiftEndDate.setDate(shiftEndDate.getDate() + 1);
+         
+         const diffLate = checkInDate.getTime() - shiftStartDate.getTime();
+         if (diffLate > 0) late_minutes = Math.floor(diffLate / 60000);
+         
+         const diffEarly = shiftEndDate.getTime() - checkOutDate.getTime();
+         if (diffEarly > 0) early_leave_minutes = Math.floor(diffEarly / 60000);
+         
+         const diffOt = checkOutDate.getTime() - shiftEndDate.getTime();
+         if (diffOt > 0) overtime_hours = diffOt / 3600000;
+         
+         if (early_leave_minutes > 0 && late_minutes > 0) status = 'LATE';
+         else if (early_leave_minutes > 0) status = 'EARLY_LEAVE';
+         else if (overtime_hours > 0) status = 'OT';
+         else if (late_minutes > 0) status = 'LATE';
+      }
+
+      if (action === 'update' && id) {
+        await pool.execute(
+          'UPDATE attendance SET checkInTimeMillis = ?, checkOutTimeMillis = ?, totalHours = ?, overtime_hours = ?, late_minutes = ?, early_leave_minutes = ?, status = ?, shift_id = ?, isValidShift = 1 WHERE id = ?',
+          [checkInDate.getTime(), checkOutDate.getTime(), totalHours.toFixed(2), overtime_hours.toFixed(2), late_minutes, early_leave_minutes, status, finalShiftId, id]
+        );
+      } else {
+        const [userRows] = await pool.execute('SELECT fullName, email FROM users WHERE id = ?', [userId]);
+        const userEmail = userRows[0]?.fullName || userRows[0]?.email || 'unknown@gmail.com';
+        
+        await pool.execute(
+          'INSERT INTO attendance (userId, userName, date, checkInTimeMillis, checkOutTimeMillis, isValidShift, totalHours, overtime_hours, late_minutes, early_leave_minutes, status, shift_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [userId, userEmail, date, checkInDate.getTime(), checkOutDate.getTime(), 1, totalHours.toFixed(2), overtime_hours.toFixed(2), late_minutes, early_leave_minutes, status, finalShiftId]
+        );
+      }
+      return res.json({ message: "Đã cập nhật bản ghi chấm công" });
+    }
+    
+    res.status(400).json({ error: "Action không hợp lệ" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -460,25 +1113,21 @@ app.get('/api/requests', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/requests', authenticateToken, async (req, res) => {
-  try {
-    const { type, date, reason } = req.body;
-    await pool.execute(
-      'INSERT INTO requests (userId, userName, type, date, reason) VALUES (?, ?, ?, ?, ?)',
-      [req.user.uid, req.user.email, type, date, reason]
-    );
-    res.json({ message: "Nộp đơn thành công" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 app.put('/api/requests/:id', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { status, adminNote, userId } = req.body;
+    const reqId = req.params.id;
+    
+    // Fetch request to check type
+    const [reqRows] = await pool.execute('SELECT * FROM requests WHERE id = ?', [reqId]);
+    if (reqRows.length === 0) return res.status(404).json({ error: "Không tìm thấy đơn" });
+    const requestData = reqRows[0];
+
     await pool.execute(
       'UPDATE requests SET status = ?, adminNote = ? WHERE id = ?',
-      [status, adminNote, req.params.id]
+      [status, adminNote, reqId]
     );
     
     // Create notification
@@ -486,6 +1135,36 @@ app.put('/api/requests/:id', authenticateToken, isAdmin, async (req, res) => {
       'INSERT INTO notifications (userId, title, message) VALUES (?, ?, ?)',
       [userId, `Đơn của bạn đã bị ${status === 'approved' ? 'duyệt' : 'từ chối'}`, `Phản hồi: ${adminNote || 'Không có'}`]
     );
+
+    // If shift swap and approved
+    if (status === 'approved' && requestData.type === 'Đổi ca' && requestData.targetUserId) {
+      const swapDate = requestData.date;
+      const userA = requestData.userId;
+      const userB = requestData.targetUserId;
+      
+      // Get their default shifts
+      const [uA] = await pool.execute('SELECT shift_id FROM users WHERE id = ?', [userA]);
+      const [uB] = await pool.execute('SELECT shift_id FROM users WHERE id = ?', [userB]);
+      
+      const shiftA = uA[0]?.shift_id || 'shift_1';
+      const shiftB = uB[0]?.shift_id || 'shift_1';
+      
+      // Swap shifts in daily_shifts
+      await pool.execute(
+        'INSERT INTO daily_shifts (userId, date, shift_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE shift_id = ?',
+        [userA, swapDate, shiftB, shiftB]
+      );
+      await pool.execute(
+        'INSERT INTO daily_shifts (userId, date, shift_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE shift_id = ?',
+        [userB, swapDate, shiftA, shiftA]
+      );
+      
+      // Notify user B
+      await pool.execute(
+        'INSERT INTO notifications (userId, title, message) VALUES (?, ?, ?)',
+        [userB, `Bạn có lịch đổi ca`, `Đổi ca với ${requestData.userName} vào ngày ${swapDate}.`]
+      );
+    }
     
     res.json({ message: "Cập nhật đơn thành công" });
   } catch (error) {

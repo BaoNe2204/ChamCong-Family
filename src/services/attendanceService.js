@@ -1,7 +1,7 @@
 import { api } from './api';
 
-export const checkIn = async (userId, userName) => {
-  return await api.post('/attendance/checkin', {});
+export const checkIn = async (userId, userName, lat, lng) => {
+  return await api.post('/attendance/checkin', { lat, lng });
 };
 
 export const checkOut = async (userId) => {
