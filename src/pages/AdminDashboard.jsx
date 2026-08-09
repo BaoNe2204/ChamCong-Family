@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Users, FileDown, Search, ArrowLeft, Settings, CheckCircle2, XCircle, Clock, FileText, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Users, FileDown, Search, ArrowLeft, Settings, CheckCircle2, XCircle, Clock, FileText, TrendingUp, Calendar, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -78,6 +80,13 @@ export default function AdminDashboard() {
     return name.includes(search) || email.includes(search);
   });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedMonth, selectedYear]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleExportCSV = () => {
     const headers = ["Ngày", "Họ Tên", "Email", "Vào ca", "Tan ca", "Tổng giờ", "Đi trễ (phút)", "Về sớm (phút)", "OT (giờ)", "Trạng thái"];
     const rows = filteredData.map(record => {
@@ -118,7 +127,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 p-4 md:p-8 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 p-4 md:p-8 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       <div className="w-full space-y-8">
         
         {/* Header Section */}
@@ -279,7 +288,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((record) => (
+                  currentData.map((record) => (
                     <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-semibold text-slate-700 dark:text-slate-300">
@@ -358,6 +367,54 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {filteredData.length > 0 && (
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/10">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Hiển thị <span className="font-semibold text-slate-700 dark:text-slate-200">{(currentPage - 1) * itemsPerPage + 1}</span> đến <span className="font-semibold text-slate-700 dark:text-slate-200">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> trong tổng số <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredData.length}</span> bản ghi
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

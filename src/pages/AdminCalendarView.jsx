@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, CheckCircle2, XCircle, X, Save, Edit2, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, CheckCircle2, XCircle, X, Save, Edit2, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function AdminCalendarView() {
@@ -13,6 +13,7 @@ export default function AdminCalendarView() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
   
   const [formData, setFormData] = useState({
     action: 'update',
@@ -266,6 +267,41 @@ export default function AdminCalendarView() {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-5">
                 
+                {selectedDay?.record && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Ảnh chấm công</label>
+                    <div className="flex gap-4">
+                      {/* Check-in Photo */}
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 mb-1 text-center">Ảnh Check-in</p>
+                        {selectedDay.record.checkInPhoto ? (
+                          <button type="button" onClick={() => setLightboxImage(`http://localhost:5000${selectedDay.record.checkInPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
+                            <img src={`http://localhost:5000${selectedDay.record.checkInPhoto}`} alt="Check-in" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
+                          </button>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                            <span className="text-xs font-medium text-slate-400">Không có ảnh</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Check-out Photo */}
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 mb-1 text-center">Ảnh Check-out</p>
+                        {selectedDay.record.checkOutPhoto ? (
+                          <button type="button" onClick={() => setLightboxImage(`http://localhost:5000${selectedDay.record.checkOutPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
+                            <img src={`http://localhost:5000${selectedDay.record.checkOutPhoto}`} alt="Check-out" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
+                          </button>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                            <span className="text-xs font-medium text-slate-400">Không có ảnh</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Trạng thái */}
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Hành động</label>
@@ -336,6 +372,25 @@ export default function AdminCalendarView() {
               </div>
             </form>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Image Lightbox Modal */}
+      {lightboxImage && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setLightboxImage(null)}></div>
+          <button 
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Preview" 
+            className="relative z-10 max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain border border-white/10"
+          />
         </div>,
         document.body
       )}

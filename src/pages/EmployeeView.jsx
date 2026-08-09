@@ -392,18 +392,10 @@ export default function EmployeeView() {
                       <div className="w-12 h-12 mb-3 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shadow-md border border-white/30">
                         <CheckCircle2 className="w-6 h-6 text-white" />
                       </div>
-                      <span className="text-xl md:text-2xl font-black tracking-tight text-white drop-shadow-md mb-1">ĐÃ CHỐT CA GẦN NHẤT!</span>
-                      <span className="text-xs font-bold text-white/90">Bạn đã ra về. Nhấn "Vào Ca Lại" bên dưới nếu muốn tiếp tục làm việc.</span>
+                      <span className="text-xl md:text-2xl font-black tracking-tight text-white drop-shadow-md mb-1">HOÀN THÀNH CA LÀM!</span>
+                      <span className="text-sm font-bold text-white/90">Bạn đã ra về và chốt công cho ngày hôm nay. Hẹn gặp lại vào ngày mai!</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={handleCheckIn} 
-                    disabled={!isReady || loadingAction} 
-                    className="w-full relative group rounded-2xl py-4 flex flex-row items-center justify-center transition-all duration-300 bg-white dark:bg-slate-700 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-                  >
-                    <PlayCircle className="w-5 h-5 mr-2" />
-                    VÀO CA LẠI (PHIÊN MỚI)
-                  </button>
                 </div>
               )}
             </div>

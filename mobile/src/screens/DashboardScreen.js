@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
+import * as ImagePicker from 'expo-image-picker';
 import { MapPin, Bell, Clock, WifiOff } from 'lucide-react-native';
 import api from '../services/api';
 
@@ -142,13 +143,43 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  const capturePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Lỗi', 'Cần cấp quyền Camera để thực hiện chấm công.');
+      return null;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'], // Fix deprecation warning
+      quality: 0.5,
+    });
+    if (result.canceled) {
+      return null;
+    }
+    return result.assets[0];
+  };
+
   const handleCheckIn = async () => {
     if (!currentLocation) return;
+    
+    const photo = await capturePhoto();
+    if (!photo) return;
+    
     setActionLoading(true);
     try {
-      const result = await api.post('/attendance/checkin', {
-        lat: currentLocation.lat,
-        lng: currentLocation.lng
+      const formData = new FormData();
+      formData.append('lat', currentLocation.lat);
+      formData.append('lng', currentLocation.lng);
+      
+      const localUri = photo.uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      
+      formData.append('photo', { uri: localUri, name: filename, type });
+
+      const result = await api.post('/attendance/checkin', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       Speech.speak('Đã chấm công thành công!', { language: 'vi-VN' });
       Alert.alert('Thành công', result.data.message || 'Check-in thành công!');
@@ -161,9 +192,23 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const handleCheckOut = async () => {
+    const photo = await capturePhoto();
+    if (!photo) return;
+
     setActionLoading(true);
     try {
-      const result = await api.post('/attendance/checkout');
+      const formData = new FormData();
+      
+      const localUri = photo.uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      
+      formData.append('photo', { uri: localUri, name: filename, type });
+
+      const result = await api.post('/attendance/checkout', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       Speech.speak('Đã chấm công thành công!', { language: 'vi-VN' });
       Alert.alert('Thành công', result.data.message || 'Check-out thành công!');
       loadUserAndData();

@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 require('dotenv').config();
 
 const pool = require('./db');
@@ -10,6 +12,17 @@ const { setupCronJobs } = require('./cronJobs');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, 'public/uploads'))
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
 
 // Start cron jobs
 setupCronJobs(pool);
@@ -215,9 +228,10 @@ app.get('/api/attendance/check-network', authenticateToken, async (req, res) => 
   }
 });
 
-app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
+app.post('/api/attendance/checkin', authenticateToken, upload.single('photo'), async (req, res) => {
   try {
     const { lat, lng } = req.body;
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
     
     // 1. Lấy cấu hình hệ thống
     const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
@@ -268,14 +282,20 @@ app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
       shift_id = userRows[0]?.shift_id || 'shift_1';
     }
 
-    // 5. Kiểm tra có phiên nào đang mở không (chưa check-out)
-    const [existingOpen] = await pool.execute(
-      'SELECT id FROM attendance WHERE userId = ? AND checkOutTimeMillis IS NULL',
-      [req.user.uid]
+    // 5. Kiểm tra có phiên nào trong hôm nay chưa (Chỉ 1 ca/ngày)
+    const [existingToday] = await pool.execute(
+      'SELECT id, checkOutTimeMillis FROM attendance WHERE userId = ? AND date = ?',
+      [req.user.uid, today]
     );
     
-    if (existingOpen.length > 0) {
-      return res.status(400).json({ error: "Bạn đang có một phiên làm việc chưa check-out!" });
+    if (existingToday.length > 0) {
+      // Đã có record hôm nay
+      const hasOpenSession = existingToday.some(r => r.checkOutTimeMillis === null);
+      if (hasOpenSession) {
+        return res.status(400).json({ error: "Bạn đang có một phiên làm việc chưa check-out!" });
+      } else {
+        return res.status(400).json({ error: "Bạn đã hoàn thành ca làm việc hôm nay rồi. Không thể check-in thêm!" });
+      }
     }
     
     // 6. Tính toán đi trễ (late_minutes) và chặn Check-in sớm
@@ -293,15 +313,27 @@ app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
         return res.status(403).json({ error: `Chưa đến giờ làm việc. Bạn chỉ được Check-in sớm tối đa 30 phút trước ca (${currentShift.startTime}).` });
       }
 
+      const [eh, em] = currentShift.endTime.split(':');
+      const shiftEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), Number(eh), Number(em), 0);
+      
+      // Chặn check-in nếu đã qua giờ kết thúc ca
+      if (now.getTime() > shiftEndDate.getTime()) {
+        return res.status(403).json({ error: `Ca làm việc của bạn (${currentShift.startTime} - ${currentShift.endTime}) đã kết thúc. Không thể Check-in nữa.` });
+      }
+
       if (diffMs > 0) { // Đi trễ
+        // Chặn check-in trễ quá 30 phút
+        if (diffMs > 30 * 60 * 1000) {
+          return res.status(403).json({ error: `Đã quá thời gian cho phép Check-in (Tối đa trễ 30 phút so với ${currentShift.startTime}). Bạn không thể Check-in ca này nữa.` });
+        }
         late_minutes = Math.floor(diffMs / 60000);
       }
     }
 
     // 7. Tạo phiên mới
     await pool.execute(
-      'INSERT INTO attendance (userId, userName, date, shift_id, checkInTimeMillis, status, late_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.user.uid, req.user.email, today, shift_id, Date.now(), 'PRESENT', late_minutes]
+      'INSERT INTO attendance (userId, userName, date, shift_id, checkInTimeMillis, status, late_minutes, checkInPhoto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.uid, req.user.email, today, shift_id, Date.now(), 'PRESENT', late_minutes, photoPath]
     );
     
     res.json({ message: "Check-in thành công" });
@@ -310,8 +342,9 @@ app.post('/api/attendance/checkin', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/attendance/checkout', authenticateToken, async (req, res) => {
+app.post('/api/attendance/checkout', authenticateToken, upload.single('photo'), async (req, res) => {
   try {
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
     // 1. Tìm phiên đang mở
     const [existing] = await pool.execute(
       'SELECT * FROM attendance WHERE userId = ? AND checkOutTimeMillis IS NULL ORDER BY checkInTimeMillis DESC LIMIT 1',
@@ -377,9 +410,17 @@ app.post('/api/attendance/checkout', authenticateToken, async (req, res) => {
       }
     }
     
+    let isValidShift = 1;
+    const minHoursForValidShift = settings.minHoursForValidShift !== undefined ? parseFloat(settings.minHoursForValidShift) : 0;
+    
+    if (totalHours < minHoursForValidShift) {
+      isValidShift = 0;
+      status = 'INVALID_SHORT';
+    }
+
     await pool.execute(
-      'UPDATE attendance SET checkOutTimeMillis = ?, totalHours = ?, overtime_hours = ?, early_leave_minutes = ?, status = ?, isValidShift = 1 WHERE id = ?',
-      [checkOutTimeMillis, totalHours.toFixed(2), overtime_hours.toFixed(2), early_leave_minutes, status, record.id]
+      'UPDATE attendance SET checkOutTimeMillis = ?, totalHours = ?, overtime_hours = ?, early_leave_minutes = ?, status = ?, isValidShift = ?, checkOutPhoto = ? WHERE id = ?',
+      [checkOutTimeMillis, totalHours.toFixed(2), overtime_hours.toFixed(2), early_leave_minutes, status, isValidShift, photoPath, record.id]
     );
     
     res.json({ message: "Check-out thành công", totalHours: totalHours.toFixed(2), status });
@@ -560,12 +601,12 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
       otHours += day.overtime_hours;
     });
 
-    const hourlyRate = baseSalary / 26 / 8;
+    const shiftRate = 200000;
+    const hourlyRate = shiftRate / 8;
     const otRate = hourlyRate * 1.5;
     
-    // Salary = (base / 26) * (onTime + late) + OT
     const workDays = monthRows.length;
-    const calculatedSalary = (baseSalary / 26) * workDays;
+    const calculatedSalary = workDays * shiftRate;
     const calculatedOT = otHours * otRate;
     const totalSalary = calculatedSalary + calculatedOT;
     
@@ -742,7 +783,8 @@ app.get('/api/attendance/payroll/:month/:year', authenticateToken, async (req, r
       else errorDays++;
     });
     
-    const salary = totalHours * hourlyRate;
+    const shiftRate = 200000;
+    const salary = validDays * shiftRate;
     
     res.json({
       hourlyRate,
@@ -829,8 +871,10 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
       
       const finalOvertimeHours = overtimeHours + manualOtHours;
       
-      const baseSalary = baseHours * finalHourlyRate;
-      const otSalary = finalOvertimeHours * finalHourlyRate * otMultiplier;
+      const shiftRate = 200000;
+      const computedHourlyRate = shiftRate / 8;
+      const baseSalary = validDays * shiftRate;
+      const otSalary = finalOvertimeHours * computedHourlyRate * otMultiplier;
       const totalSalary = baseSalary + otSalary + bonus - penalty;
       
       return {

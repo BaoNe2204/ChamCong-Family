@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity, Alert, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity, Alert, Modal, TextInput, Platform, Linking } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { History, CalendarDays, Edit2, Trash2, X, Clock } from 'lucide-react-native';
+import { History, CalendarDays, Edit2, Trash2, X, Clock, Image as ImageIcon } from 'lucide-react-native';
 import api from '../services/api';
 
 export default function AdminAttendanceLogsScreen({ navigation }) {
@@ -159,12 +159,28 @@ export default function AdminAttendanceLogsScreen({ navigation }) {
               <View style={styles.actions}>
                 <TouchableOpacity style={[styles.actionBtn, { borderColor: '#e0e7ff' }]} onPress={() => openEditModal(item)}>
                   <Edit2 size={16} color="#4f46e5" />
-                  <Text style={[styles.actionText, { color: '#4f46e5' }]}>Sửa giờ</Text>
+                  <Text style={[styles.actionText, { color: '#4f46e5' }]}>Sửa</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionBtn, { borderColor: '#fee2e2' }]} onPress={() => handleDelete(item)}>
                   <Trash2 size={16} color="#dc2626" />
                   <Text style={[styles.actionText, { color: '#dc2626' }]}>Xóa</Text>
                 </TouchableOpacity>
+                {(item.checkInPhoto || item.checkOutPhoto) && (
+                  <TouchableOpacity 
+                    style={[styles.actionBtn, { borderColor: '#dcfce7' }]} 
+                    onPress={() => {
+                      const baseUrl = api.defaults.baseURL.replace('/api', '');
+                      if (item.checkInPhoto) {
+                        Linking.openURL(`${baseUrl}${item.checkInPhoto}`);
+                      } else {
+                        Linking.openURL(`${baseUrl}${item.checkOutPhoto}`);
+                      }
+                    }}
+                  >
+                    <ImageIcon size={16} color="#16a34a" />
+                    <Text style={[styles.actionText, { color: '#16a34a' }]}>Ảnh</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           )}

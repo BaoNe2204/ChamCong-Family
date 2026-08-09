@@ -1,5 +1,7 @@
 const cron = require('node-cron');
 const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
 
 // Expo push API endpoint
 const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
@@ -71,6 +73,34 @@ const setupCronJobs = (pool) => {
 
     } catch (error) {
       console.error('Error in cron job:', error);
+    }
+  });
+
+  // Run daily at 2:00 AM to delete old photos (older than 60 days)
+  cron.schedule('0 2 * * *', () => {
+    try {
+      console.log('Running cron job to clean up old photos...');
+      const uploadsDir = path.join(__dirname, 'public/uploads');
+      if (!fs.existsSync(uploadsDir)) return;
+
+      const files = fs.readdirSync(uploadsDir);
+      const now = Date.now();
+      const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
+
+      let deletedCount = 0;
+      for (const file of files) {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        if (now - stats.mtimeMs > sixtyDaysMs) {
+          fs.unlinkSync(filePath);
+          deletedCount++;
+        }
+      }
+      if (deletedCount > 0) {
+        console.log(`Cleaned up ${deletedCount} old photos.`);
+      }
+    } catch (error) {
+      console.error('Error in photo cleanup cron job:', error);
     }
   });
 };

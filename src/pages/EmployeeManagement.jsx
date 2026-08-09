@@ -236,7 +236,7 @@ export default function EmployeeManagement() {
                             </span>
                           </div>
                           <span className="px-2 py-1 text-[11px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wider">
-                            Lương: {new Intl.NumberFormat('vi-VN').format(user.hourlyRate || 0)}đ/h
+                            Lương/Ca: 200.000đ
                           </span>
                         </div>
                       </td>
@@ -355,16 +355,7 @@ export default function EmployeeManagement() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Lương theo giờ (VNĐ)</label>
-                <input
-                  type="number"
-                  value={formData.hourlyRate}
-                  onChange={(e) => setFormData({...formData, hourlyRate: parseInt(e.target.value) || 0})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-slate-800 dark:text-white"
-                  placeholder="Ví dụ: 25000"
-                />
-              </div>
+
 
               <div className="pt-4 flex gap-3">
                 <button 

@@ -62,7 +62,7 @@ export default function AdminPayroll() {
         record.userId, 
         `"${record.fullName}"`,
         record.email,
-        record.hourlyRate,
+        200000,
         record.totalHours,
         record.validDays,
         record.errorDays,
@@ -211,7 +211,7 @@ export default function AdminPayroll() {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5">
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">Nhân viên</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Lương / Giờ</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Lương / Ca</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Tổng công</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Giờ Cơ Bản</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Giờ OT</th>
@@ -252,7 +252,7 @@ export default function AdminPayroll() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="inline-flex px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 text-xs font-bold border border-indigo-100 dark:border-indigo-500/20">
-                        {new Intl.NumberFormat('vi-VN').format(record.hourlyRate)}đ
+                        200.000đ
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -329,15 +329,7 @@ export default function AdminPayroll() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Lương cơ bản / Giờ (VNĐ)</label>
-                <input 
-                  type="number"
-                  value={adjustments.hourlyRate}
-                  onChange={(e) => setAdjustments({...adjustments, hourlyRate: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all dark:text-white"
-                />
-              </div>
+
 
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Số giờ Tăng ca cộng thêm thủ công</label>

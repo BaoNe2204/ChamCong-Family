@@ -8,9 +8,9 @@ export default function AdminSettingsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
-    maxDistance: '500',
     wifiIp: '',
     otMultiplier: '1.5',
+    minHoursForValidShift: '4',
     baseWorkingDays: '26',
     shifts: []
   });
@@ -27,9 +27,9 @@ export default function AdminSettingsScreen({ navigation }) {
       const res = await api.get('/settings');
       if (res.data) {
         setSettings({
-          ...res.data,
           maxDistance: res.data.maxDistance ? res.data.maxDistance.toString() : '500',
           otMultiplier: res.data.otMultiplier ? res.data.otMultiplier.toString() : '1.5',
+          minHoursForValidShift: res.data.minHoursForValidShift ? res.data.minHoursForValidShift.toString() : '0',
           baseWorkingDays: res.data.baseWorkingDays ? res.data.baseWorkingDays.toString() : '26',
           wifiIp: res.data.wifiIp || ''
         });
@@ -49,6 +49,7 @@ export default function AdminSettingsScreen({ navigation }) {
         ...settings,
         maxDistance: parseInt(settings.maxDistance) || 500,
         otMultiplier: parseFloat(settings.otMultiplier) || 1.5,
+        minHoursForValidShift: parseFloat(settings.minHoursForValidShift) || 0,
         baseWorkingDays: parseInt(settings.baseWorkingDays) || 26
       };
       await api.post('/settings', payload);
@@ -124,16 +125,17 @@ export default function AdminSettingsScreen({ navigation }) {
                 />
               </View>
               <View style={styles.col}>
-                <Text style={styles.label}>Ngày công chuẩn</Text>
+                <Text style={styles.label}>Tối thiểu tính ca (Giờ)</Text>
                 <TextInput
                   style={styles.input}
-                  value={settings.baseWorkingDays}
-                  onChangeText={(text) => setSettings({ ...settings, baseWorkingDays: text })}
+                  value={settings.minHoursForValidShift}
+                  onChangeText={(text) => setSettings({ ...settings, minHoursForValidShift: text })}
                   keyboardType="numeric"
-                  placeholder="VD: 26"
+                  placeholder="VD: 4"
                 />
               </View>
             </View>
+            <Text style={styles.hint}>Làm dưới thời gian này, khi check-out sẽ không được tính lương ca đó.</Text>
           </View>
 
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
