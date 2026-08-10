@@ -186,11 +186,11 @@ export default function AdminTimesheet() {
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
-                <th className="px-2 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50/90 dark:bg-slate-900/90 min-w-[120px]">
+                <th className="px-2 md:px-4 py-3 text-[11px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50/90 dark:bg-slate-900/90 min-w-[140px] md:min-w-[180px] sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                   Nhân viên
                 </th>
                 {Array.from({ length: daysInMonth }, (_, i) => (
-                  <th key={i} className="px-1 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center min-w-[20px]">
+                  <th key={i} className="px-1 py-3 text-[11px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center min-w-[32px] md:min-w-[40px]">
                     {i + 1}
                   </th>
                 ))}
@@ -224,9 +224,9 @@ export default function AdminTimesheet() {
               ) : (
                 timesheetData.map((record) => (
                   <tr key={record.userId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-2 py-2 whitespace-nowrap bg-white/90 dark:bg-slate-900/90 border-r border-slate-100 dark:border-slate-800/60">
-                      <div className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate max-w-[120px]">{record.fullName || 'Chưa cập nhật'}</div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{record.email}</div>
+                    <td className="px-2 md:px-4 py-3 whitespace-nowrap bg-white/95 dark:bg-slate-900/95 border-r border-slate-100 dark:border-slate-800/60 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
+                      <div className="font-bold text-slate-900 dark:text-slate-100 text-xs md:text-sm truncate max-w-[130px] md:max-w-[170px]">{record.fullName || 'Chưa cập nhật'}</div>
+                      <div className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 truncate max-w-[130px] md:max-w-[170px]">{record.email}</div>
                     </td>
                     
                     {daysArray.map((dateStr, index) => {
@@ -237,12 +237,12 @@ export default function AdminTimesheet() {
                         <td key={index} className={`px-0.5 py-2 text-center border-r border-slate-50 dark:border-slate-800/30 ${isWeekend ? 'bg-slate-50/50 dark:bg-slate-800/20' : ''}`}>
                           {dayData && dayData.totalHours > 0 ? (
                             <div className="w-full h-full flex flex-col items-center justify-center">
-                                <span className={`text-[11px] font-bold ${!dayData.isValid ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`}>
+                                <span className={`text-[12px] md:text-sm font-bold ${!dayData.isValid ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`}>
                                   {Math.round(dayData.totalHours * 10) / 10}
                                 </span>
                             </div>
                           ) : (
-                            <span className="text-slate-300 dark:text-slate-600 font-medium text-[10px]">-</span>
+                            <span className="text-slate-300 dark:text-slate-600 font-medium text-[11px] md:text-xs">-</span>
                           )}
                         </td>
                       );
