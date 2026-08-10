@@ -15,13 +15,17 @@ import {
   Clock,
   CalendarDays,
   DollarSign,
-  ClipboardList
+  ClipboardList,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 export default function AdminLayout() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDark, toggleDark] = useDarkMode();
 
   const handleLogout = async () => {
     try {
@@ -85,7 +89,20 @@ export default function AdminLayout() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-200 dark:border-white/10">
+      <div className="p-4 border-t border-slate-200 dark:border-white/10 space-y-2">
+        <button
+          onClick={toggleDark}
+          className="flex items-center justify-between px-4 py-3 w-full rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/10 transition-all duration-300"
+        >
+          <div className="flex items-center gap-3 font-bold text-sm">
+            {isDark ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
+            <span>Giao diện {isDark ? 'Sáng' : 'Tối'}</span>
+          </div>
+          <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDark ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isDark ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+        </button>
+
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all duration-300"
@@ -107,9 +124,7 @@ export default function AdminLayout() {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 z-50 flex items-center justify-between px-4">
         <div className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center">
-            <span className="text-white text-xs">AD</span>
-          </div>
+          <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
           Admin Panel
         </div>
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">

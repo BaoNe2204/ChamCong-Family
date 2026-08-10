@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({ 
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['logo.jpg'],
       manifest: {
         name: 'ChamCong Family',
         short_name: 'Chấm Công',
@@ -18,14 +18,14 @@ export default defineConfig({
         theme_color: '#3b82f6',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'logo.jpg',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/jpeg'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'logo.jpg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/jpeg'
           }
         ]
       }

@@ -58,9 +58,7 @@ export default function Login() {
           {/* Logo / Icon */}
           <div className="flex justify-center mb-8 relative">
             <div className="absolute inset-0 bg-primary-500 blur-2xl opacity-20 rounded-full" />
-            <div className="w-16 h-16 bg-gradient-to-tr from-primary-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/20 relative z-10 border border-white/10 rotate-3 transition-transform hover:rotate-6">
-              <Fingerprint className="w-8 h-8 text-white" />
-            </div>
+            <img src="/logo.jpg" alt="Logo" className="w-20 h-20 rounded-3xl object-cover shadow-[0_0_40px_rgba(59,130,246,0.3)] relative z-10 border-2 border-white/10 transition-transform hover:scale-105" />
           </div>
 
           <div className="text-center mb-10 relative z-10">
