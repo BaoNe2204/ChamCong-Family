@@ -129,7 +129,13 @@ export default function EmployeeView() {
         }
       },
       (error) => {
-        alert('Vui lòng cấp quyền vị trí (GPS) để chấm công!');
+        if (!window.isSecureContext) {
+          alert('Trình duyệt đã chặn định vị vì bạn đang truy cập bằng địa chỉ IP (HTTP) không bảo mật. Vui lòng cài đặt HTTPS hoặc dùng App điện thoại!');
+        } else if (error.code === error.PERMISSION_DENIED) {
+          alert('Bạn (hoặc trình duyệt) đã chặn quyền truy cập vị trí. Vui lòng vào Cài đặt của trình duyệt để mở khóa GPS cho trang web này!');
+        } else {
+          alert('Không thể lấy vị trí GPS hiện tại! Vui lòng thử lại sau.');
+        }
         setLocationStatus('Chưa cấp quyền GPS');
         setGpsIcon('🔴');
         setLoadingAction(false);
