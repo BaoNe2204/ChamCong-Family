@@ -5,7 +5,9 @@ echo       Dang keo code moi nhat tu Git...
 echo =========================================
 echo.
 
-call git pull origin main
+call git fetch --all
+call git reset --hard origin/main
+call git clean -fd
 
 echo.
 echo =========================================
