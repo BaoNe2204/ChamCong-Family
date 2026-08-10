@@ -539,9 +539,9 @@ app.get('/api/attendance/dashboard-full', authenticateToken, async (req, res) =>
     const currentMonthStr = `${vnDate.getUTCFullYear()}-${(vnDate.getUTCMonth() + 1).toString().padStart(2, '0')}%`;
 
     // 1. Get user info
-    const [userRows] = await pool.execute('SELECT email, fullName, role, baseSalary, hourlyRate FROM users WHERE id = ?', [userId]);
+    const [userRows] = await pool.execute('SELECT email, fullName, role, hourlyRate FROM users WHERE id = ?', [userId]);
     const userInfo = userRows[0] || {};
-    const baseSalary = userInfo.baseSalary || 6000000;
+    const baseSalary = 6000000;
 
     // 2. Get Settings
     const [settingsRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
