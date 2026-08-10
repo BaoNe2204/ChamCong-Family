@@ -25,20 +25,25 @@ const setupCronJobs = (pool) => {
       const currentMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
       const todayDate = vnTime.toISOString().split('T')[0];
 
-      // Get all users, their push tokens, and their shift for today
-      // Assuming user_shifts joins with shifts. If no specific shift, we can use default or just skip.
+      // 1. Get Settings for Shifts
+      const [settingsRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+      const settings = settingsRows.length > 0 ? JSON.parse(settingsRows[0].setting_value) : null;
+      const shifts = settings?.shifts || [];
+
+      // 2. Get all users with push tokens
       const [users] = await pool.execute(`
-        SELECT u.id, u.pushToken, s.startTime, s.endTime
-        FROM users u
-        LEFT JOIN shifts s ON u.shift_id = s.id
-        WHERE u.pushToken IS NOT NULL
+        SELECT id, pushToken, shift_id
+        FROM users
+        WHERE pushToken IS NOT NULL
       `);
 
       for (let user of users) {
-        if (!user.startTime || !user.endTime) continue; // User doesn't have a shift
+        // Find the user's shift from settings
+        const userShift = shifts.find(s => s.id === user.shift_id) || shifts[0];
+        if (!userShift || !userShift.startTime || !userShift.endTime) continue; // Skip if no valid shift found
 
-        const shiftStartMins = timeToMinutes(user.startTime);
-        const shiftEndMins = timeToMinutes(user.endTime);
+        const shiftStartMins = timeToMinutes(userShift.startTime);
+        const shiftEndMins = timeToMinutes(userShift.endTime);
 
         // Check Check-In reminder (15 mins after shift start)
         // If current time is between start+15 and start+20
