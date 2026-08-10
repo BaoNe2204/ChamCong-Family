@@ -163,49 +163,102 @@ export default function AdminPayroll() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-2xl">
-                <Briefcase className="w-6 h-6" />
+      <div className="grid grid-cols-3 gap-2 md:gap-6">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-lg md:rounded-2xl">
+                <Briefcase className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-slate-500 dark:text-slate-400">Tổng Nhân Sự</h3>
+              <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Nhân Sự</h3>
             </div>
-            <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
+            <p className="text-base md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-50 dark:bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-2xl">
-                <Clock className="w-6 h-6" />
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-purple-50 dark:bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-lg md:rounded-2xl">
+                <Clock className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-slate-500 dark:text-slate-400">Tổng Giờ Làm</h3>
+              <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Giờ Làm</h3>
             </div>
-            <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
+            <p className="text-base md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xl shadow-emerald-500/20 rounded-3xl p-6 relative overflow-hidden group text-white">
-          <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                <Calculator className="w-6 h-6" />
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xl shadow-emerald-500/20 rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group text-white">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-32 md:h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-white/20 rounded-lg md:rounded-2xl backdrop-blur-md">
+                <Calculator className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-emerald-50 uppercase tracking-widest text-sm">Quỹ Lương Dự Kiến</h3>
+              <h3 className="font-bold text-emerald-50 text-[8px] md:text-sm uppercase tracking-widest whitespace-nowrap">Quỹ Lương</h3>
             </div>
-            <p className="text-4xl font-black tracking-tighter drop-shadow-md">{formatMoney(stats.totalSalary)}</p>
+            <p className="text-sm md:text-4xl font-black tracking-tighter drop-shadow-md">{formatMoney(stats.totalSalary)}</p>
           </div>
         </div>
       </div>
 
-      {/* Payroll Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl overflow-hidden">
+      {/* Mobile Card View (No Horizontal Scroll) */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+            <div className="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Đang tính toán bảng lương...</p>
+          </div>
+        ) : payrollData.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center border border-slate-200/60 dark:border-slate-800 shadow-sm">
+            <DollarSign className="w-12 h-12 mb-3 opacity-20 text-slate-400" />
+            <p className="font-medium text-lg text-slate-500 dark:text-slate-400">Không có dữ liệu tháng này</p>
+          </div>
+        ) : (
+          payrollData.map(record => (
+            <div key={record.userId} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/60 dark:border-slate-800">
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shrink-0">
+                  {(record.fullName || record.email).charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">{record.fullName || 'Chưa cập nhật'}</div>
+                  <div className="text-[10px] text-slate-500 truncate">{record.email}</div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                 <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Lương/Ca</div>
+                   <div className="font-bold text-sm">{formatMoney(record.baseSalary)}</div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Tổng công</div>
+                   <div className="font-bold text-sm text-blue-600 dark:text-blue-400">{record.totalWorkDays} <span className="text-xs font-normal text-slate-500">ng</span></div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Giờ Cơ Bản</div>
+                   <div className="font-bold text-sm">{Math.round(record.totalHours * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Giờ OT</div>
+                   <div className="font-bold text-sm text-purple-600 dark:text-purple-400">{Math.round(record.overtimeHours * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
+                 </div>
+              </div>
+              
+              <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
+                 <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">TỔNG LƯƠNG</span>
+                 <span className="text-lg font-black text-emerald-700 dark:text-emerald-300 drop-shadow-sm">{formatMoney(record.totalSalary)}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Payroll Table (Desktop Only) */}
+      <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
             <thead>
