@@ -149,7 +149,10 @@ export default function SystemSettings() {
                   <input 
                     type="number" step="any"
                     value={settings.factoryLat}
-                    onChange={(e) => setSettings({...settings, factoryLat: parseFloat(e.target.value)})}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setSettings({...settings, factoryLat: isNaN(val) ? '' : val});
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none font-medium text-slate-800 dark:text-white"
                   />
                 </div>
@@ -158,7 +161,10 @@ export default function SystemSettings() {
                   <input 
                     type="number" step="any"
                     value={settings.factoryLng}
-                    onChange={(e) => setSettings({...settings, factoryLng: parseFloat(e.target.value)})}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setSettings({...settings, factoryLng: isNaN(val) ? '' : val});
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none font-medium text-slate-800 dark:text-white"
                   />
                 </div>
@@ -168,7 +174,10 @@ export default function SystemSettings() {
                 <input 
                   type="number"
                   value={settings.maxDistance}
-                  onChange={(e) => setSettings({...settings, maxDistance: parseInt(e.target.value)})}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setSettings({...settings, maxDistance: isNaN(val) ? '' : val});
+                  }}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none font-medium text-slate-800 dark:text-white"
                 />
               </div>

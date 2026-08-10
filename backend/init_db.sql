@@ -59,6 +59,20 @@ CREATE TABLE IF NOT EXISTS settings (
   setting_value JSON NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS payroll_adjustments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId VARCHAR(255) NOT NULL,
+  month INT NOT NULL,
+  year INT NOT NULL,
+  manualOtHours DECIMAL(5,2) DEFAULT 0,
+  bonus INT DEFAULT 0,
+  penalty INT DEFAULT 0,
+  hourlyRate INT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_payroll_adj (userId, month, year),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Insert default settings
 INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
 ('general', '{"factoryLat": 10.762622, "factoryLng": 106.660172, "maxDistance": 500, "wifiIp": "", "shifts": [{"id": "shift_1", "name": "Ca Hành chính", "startTime": "08:00", "endTime": "17:00"}, {"id": "shift_2", "name": "Ca Đêm", "startTime": "18:00", "endTime": "06:00"}]}');
