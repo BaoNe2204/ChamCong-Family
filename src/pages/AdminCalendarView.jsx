@@ -224,17 +224,20 @@ export default function AdminCalendarView() {
                         {!isFuture ? (
                           record ? (
                             <div className="flex flex-col items-center">
-                              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] mb-1"></span>
-                              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Đã đi làm</span>
+                              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] md:mb-1"></span>
+                              <span className="hidden md:block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Đã đi làm</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center">
-                              <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] mb-1"></span>
-                              <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Nghỉ / Vắng</span>
+                              <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] md:mb-1"></span>
+                              <span className="hidden md:block text-[10px] font-bold text-rose-600 dark:text-rose-400">Nghỉ / Vắng</span>
                             </div>
                           )
                         ) : (
-                          <span className="text-[10px] font-medium text-slate-400">Chưa đến</span>
+                          <div className="flex flex-col items-center">
+                             <span className="md:hidden w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                             <span className="hidden md:block text-[10px] font-medium text-slate-400">Chưa đến</span>
+                          </div>
                         )}
                         
                         {/* Hover Edit Icon */}
