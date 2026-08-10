@@ -139,43 +139,43 @@ export default function AdminTimesheet() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-2xl">
-                <Users className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10 flex items-center justify-between md:block">
+            <div className="flex items-center gap-3 md:mb-4">
+              <div className="p-2 md:p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-xl md:rounded-2xl">
+                <Users className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-slate-500 dark:text-slate-400">Tổng Nhân Sự</h3>
+              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Nhân Sự</h3>
             </div>
-            <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
+            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-50 dark:bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-2xl">
-                <Clock className="w-6 h-6" />
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-purple-50 dark:bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10 flex items-center justify-between md:block">
+            <div className="flex items-center gap-3 md:mb-4">
+              <div className="p-2 md:p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-xl md:rounded-2xl">
+                <Clock className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-slate-500 dark:text-slate-400">Tổng Giờ Làm</h3>
+              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Giờ Làm</h3>
             </div>
-            <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
+            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
           </div>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-50 dark:bg-amber-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-2xl">
-                <CheckSquare className="w-6 h-6" />
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-amber-50 dark:bg-amber-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10 flex items-center justify-between md:block">
+            <div className="flex items-center gap-3 md:mb-4">
+              <div className="p-2 md:p-3 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-xl md:rounded-2xl">
+                <CheckSquare className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-slate-500 dark:text-slate-400">Tổng Công</h3>
+              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Công</h3>
             </div>
-            <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalWorkDays} ngày</p>
+            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalWorkDays} ngày</p>
           </div>
         </div>
       </div>
