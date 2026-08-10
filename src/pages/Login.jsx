@@ -52,9 +52,6 @@ export default function Login() {
 
         <div className="bg-[#111111]/80 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 border border-white/10 shadow-2xl overflow-hidden relative">
           
-          {/* Subtle inner noise */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
-
           {/* Logo / Icon */}
           <div className="flex justify-center mb-8 relative">
             <div className="absolute inset-0 bg-primary-500 blur-2xl opacity-20 rounded-full" />

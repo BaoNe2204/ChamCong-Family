@@ -392,7 +392,6 @@ export default function EmployeeView() {
               {shiftStatus === 'ĐÃ RA VỀ' && (
                 <div className="w-full space-y-3">
                   <div className="w-full relative rounded-[32px] py-6 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl shadow-emerald-500/20 overflow-hidden">
-                    <div className="absolute inset-0 opacity-30 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
                     <div className="relative z-10 flex flex-col items-center text-center px-4">
                       <div className="w-12 h-12 mb-3 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shadow-md border border-white/30">
                         <CheckCircle2 className="w-6 h-6 text-white" />
