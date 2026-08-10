@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Moon, Sun, Globe, Bell, Shield, Key, Smartphone } from 'lucide-react';
 import { api } from '../services/api';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 export default function EmployeeSettings() {
-  // Load initial states from localStorage if available
-  const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light');
+  const [isDark, toggleDark] = useDarkMode();
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'vi');
   const [notifications, setNotifications] = useState(() => {
     const saved = localStorage.getItem('app_notifications');
@@ -16,12 +16,6 @@ export default function EmployeeSettings() {
   const [loadingPass, setLoadingPass] = useState(false);
 
   // Save to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('app_theme', theme);
-    // Apply theme class to HTML element for future full dark mode support
-    if (theme === 'dark') document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [theme]);
 
   useEffect(() => {
     localStorage.setItem('app_language', language);
@@ -88,23 +82,27 @@ export default function EmployeeSettings() {
               {/* Theme */}
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0 shadow-sm border border-orange-100 dark:border-orange-500/20">
-                    {theme === 'light' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+                  <div className={`p-2.5 rounded-xl ${isDark ? 'bg-indigo-50 text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-amber-50 text-amber-500 dark:bg-amber-500/20 dark:text-amber-400'}`}>
+                    {!isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800 dark:text-white text-base">Giao diện</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold">Sáng / Tối</p>
                   </div>
                 </div>
-                <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl shadow-inner border border-transparent dark:border-white/5">
-                  <button 
-                    onClick={() => setTheme('light')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${theme === 'light' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 scale-95'}`}
-                  >Sáng</button>
-                  <button 
-                    onClick={() => setTheme('dark')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${theme === 'dark' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 scale-95'}`}
-                  >Tối</button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={isDark ? toggleDark : undefined}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${!isDark ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 scale-95'}`}
+                  >
+                    Sáng
+                  </button>
+                  <button
+                    onClick={!isDark ? toggleDark : undefined}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${isDark ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 scale-95'}`}
+                  >
+                    Tối
+                  </button>
                 </div>
               </div>
 
