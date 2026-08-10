@@ -35,9 +35,10 @@ export default function AdminCalendarView() {
   const fetchUsers = async () => {
     try {
       const data = await api.get('/users');
-      // Only show employees (or everyone)
-      setUsers(data);
-      if (data.length > 0) setSelectedUser(data[0].id);
+      // Only show employees
+      const employees = data.filter(u => u.role !== 'admin');
+      setUsers(employees);
+      if (employees.length > 0) setSelectedUser(employees[0].id);
     } catch (error) {
       console.error('Lỗi khi tải danh sách nhân viên:', error);
     }
@@ -160,7 +161,9 @@ export default function AdminCalendarView() {
                 className="bg-transparent border-none outline-none pr-4 py-2 font-semibold text-slate-700 dark:text-slate-200 w-full cursor-pointer"
               >
                 {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.fullName || u.email}</option>
+                  <option key={u.id} value={u.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200">
+                    {u.fullName || u.email}
+                  </option>
                 ))}
               </select>
             </div>
