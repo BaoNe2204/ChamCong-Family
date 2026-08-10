@@ -30,8 +30,7 @@ const setupCronJobs = (pool) => {
       const [users] = await pool.execute(`
         SELECT u.id, u.pushToken, s.startTime, s.endTime
         FROM users u
-        LEFT JOIN user_shifts us ON u.id = us.userId
-        LEFT JOIN shifts s ON us.shiftId = s.id
+        LEFT JOIN shifts s ON u.shift_id = s.id
         WHERE u.pushToken IS NOT NULL
       `);
 
