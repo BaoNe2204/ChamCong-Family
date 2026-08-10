@@ -18,11 +18,9 @@ export default function EmployeeView() {
   const [mounted, setMounted] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [weather, setWeather] = useState(null);
-  const [locationStatus, setLocationStatus] = useState('Đang quét GPS...');
-  const [isReady, setIsReady] = useState(false);
+  const [locationStatus, setLocationStatus] = useState('Chờ chấm công');
   const [gpsIcon, setGpsIcon] = useState('🟡'); // 🟢, 🟡, 🔴
   const [loadingAction, setLoadingAction] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState(null);
   const [nowTick, setNowTick] = useState(new Date());
   
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -87,58 +85,57 @@ export default function EmployeeView() {
     return R * c;
   };
 
-  // GPS Tracking
-  useEffect(() => {
-    if (!dashboardData?.settings) return;
+  const handleCheckIn = async () => {
+    if (!currentUser || !dashboardData?.settings) return;
     const settings = dashboardData.settings;
 
     if (!navigator.geolocation) {
-      setLocationStatus('Thiết bị không hỗ trợ GPS');
-      setGpsIcon('🔴');
+      alert('Thiết bị hoặc trình duyệt không hỗ trợ định vị GPS!');
       return;
     }
 
+    setLoadingAction(true);
+    setLocationStatus('Đang quét vị trí...');
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        setCurrentLocation({ lat: latitude, lng: longitude });
         const distance = getDistanceFromLatLonInM(latitude, longitude, settings.factoryLat, settings.factoryLng);
         
-        if (distance <= settings.maxDistance) {
-          setLocationStatus('Trong vùng hợp lệ');
-          setGpsIcon('🟢');
-          setIsReady(true);
-        } else {
-          setLocationStatus(`Ngoài vùng (${Math.round(distance)}m)`);
+        if (distance > settings.maxDistance) {
+          alert(`Ngoài vùng hợp lệ (${Math.round(distance)}m). Vui lòng di chuyển đến gần xưởng.`);
+          setLocationStatus('Ngoài vùng');
           setGpsIcon('🔴');
-          setIsReady(false); // strictly enforce
+          setLoadingAction(false);
+          return;
+        }
+
+        setLocationStatus('Đang xử lý...');
+        setGpsIcon('🟢');
+
+        try {
+          const result = await checkIn(currentUser.uid, currentUser.email, latitude, longitude);
+          if (result && (result.success || result.message === "Check-in thành công" || result.message === "Check in thành công")) {
+            alert("Check-in thành công!");
+            setLocationStatus('Đã chấm công');
+            fetchDashboardData();
+          } else {
+            alert(result?.error || "Có lỗi xảy ra");
+          }
+        } catch (error) {
+          alert(error.message || "Lỗi mạng hoặc máy chủ!");
+        } finally {
+          setLoadingAction(false);
         }
       },
       (error) => {
+        alert('Vui lòng cấp quyền vị trí (GPS) để chấm công!');
         setLocationStatus('Chưa cấp quyền GPS');
         setGpsIcon('🔴');
-        setIsReady(false);
+        setLoadingAction(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-  }, [dashboardData?.settings]);
-
-  const handleCheckIn = async () => {
-    if (!currentUser || !currentLocation) return;
-    setLoadingAction(true);
-    try {
-      const result = await checkIn(currentUser.uid, currentUser.email, currentLocation.lat, currentLocation.lng);
-      if (result && (result.success || result.message === "Check-in thành công" || result.message === "Check in thành công")) {
-        alert("Check-in thành công!");
-        fetchDashboardData();
-      } else {
-        alert(result?.error || "Có lỗi xảy ra");
-      }
-    } catch (error) {
-      alert(error.message || "Lỗi mạng hoặc máy chủ!");
-    } finally {
-      setLoadingAction(false);
-    }
   };
 
   const handleCheckOut = async () => {
@@ -347,23 +344,20 @@ export default function EmployeeView() {
               {shiftStatus === 'CHƯA VÀO CA' && (
                 <button 
                   onClick={handleCheckIn} 
-                  disabled={!isReady || loadingAction} 
-                  className={`w-full relative group disabled:opacity-70 disabled:cursor-not-allowed rounded-[32px] py-8 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden shadow-2xl ${
-                    isReady ? 'shadow-indigo-500/40 hover:shadow-indigo-500/60 hover:-translate-y-2' : 'shadow-none'
-                  }`}
+                  disabled={loadingAction} 
+                  className={`w-full relative group disabled:opacity-70 disabled:cursor-wait rounded-[32px] py-8 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 hover:-translate-y-2`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 group-disabled:from-slate-300 group-disabled:to-slate-400 dark:group-disabled:from-slate-700 dark:group-disabled:to-slate-600 transition-colors"></div>
                   <div className="absolute inset-0 bg-gradient-to-tl from-indigo-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-disabled:hidden"></div>
-                  {isReady && (
-                    <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-indigo-300 to-purple-300 blur-2xl animate-pulse"></div>
-                  )}
+                  <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-indigo-300 to-purple-300 blur-2xl animate-pulse group-disabled:hidden"></div>
+                  
                   <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 mb-4 rounded-[20px] bg-white/20 flex items-center justify-center backdrop-blur-md group-disabled:bg-slate-500/20 group-hover:scale-110 transition-transform duration-500 shadow-md border border-white/30">
                       <PlayCircle className="w-8 h-8 text-white group-disabled:text-slate-600 dark:group-disabled:text-slate-300" />
                     </div>
                     <span className="text-3xl font-black tracking-widest text-white group-disabled:text-slate-600 dark:group-disabled:text-slate-300 drop-shadow-md">VÀO CA</span>
                     <span className="text-sm font-bold text-white/90 uppercase tracking-widest mt-2 group-disabled:text-slate-600 dark:group-disabled:text-slate-300">
-                      {!isReady ? 'Chưa tới công ty' : 'Bấm để bắt đầu làm'}
+                      {loadingAction ? 'Đang định vị GPS...' : 'Bấm để bắt đầu làm'}
                     </span>
                   </div>
                 </button>
