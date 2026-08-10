@@ -8,8 +8,8 @@ echo 1. Dang tien hanh Build source code...
 call npm install
 call npm run build
 echo.
-echo 2. Khoi dong Web Server tren cong 80 (Mac dinh cua Web)...
-echo (Ban co the truy cap truc tiep vao http://localhost hoac IP VPS ma khong can go cong)
+echo 2. Khoi dong Web Server tren cong 5173...
+echo (Ban co the truy cap vao http://localhost:5173 de xem)
 echo.
-call npx serve -s dist -p 80
+call npx serve -s dist -p 5173
 pause
