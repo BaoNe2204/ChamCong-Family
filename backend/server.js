@@ -818,8 +818,8 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
       } catch(e) {}
     }
 
-    // Get all users
-    const [users] = await pool.execute('SELECT id, email, fullName, role, hourlyRate FROM users');
+    // Get all users except admin
+    const [users] = await pool.execute('SELECT id, email, fullName, role, hourlyRate FROM users WHERE role != "admin"');
     
     // Get payroll adjustments
     const [adjustments] = await pool.execute(
@@ -942,8 +942,8 @@ app.get('/api/admin/timesheet/:month/:year', authenticateToken, isAdmin, async (
   try {
     const { month, year } = req.params;
     
-    // Get all users
-    const [users] = await pool.execute('SELECT id, email, fullName, role FROM users');
+    // Get all users except admin
+    const [users] = await pool.execute('SELECT id, email, fullName, role FROM users WHERE role != "admin"');
     
     // Get all attendance records for the month
     const startDate = `${year}-${month.padStart(2, '0')}-01`;
@@ -996,15 +996,15 @@ app.get('/api/admin/attendance', authenticateToken, isAdmin, async (req, res) =>
   try {
     const { startStr, endStr } = req.query;
     
-    let queryStr = 'SELECT * FROM attendance';
+    let queryStr = 'SELECT a.* FROM attendance a JOIN users u ON a.userId = u.id WHERE u.role != "admin"';
     let params = [];
     
     if (startStr && endStr) {
-      queryStr += ' WHERE date >= ? AND date <= ?';
+      queryStr += ' AND a.date >= ? AND a.date <= ?';
       params.push(startStr, endStr);
     }
     
-    queryStr += ' ORDER BY date DESC';
+    queryStr += ' ORDER BY a.date DESC';
     
     const [rows] = await pool.execute(queryStr, params);
     res.json(rows);
