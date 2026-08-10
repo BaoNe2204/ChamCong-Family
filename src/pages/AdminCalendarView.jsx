@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, CheckCircle2, XCircle, X, Save, Edit2, AlertCircle, Image as ImageIcon } from 'lucide-react';
-import { api } from '../services/api';
+import { api, BASE_URL } from '../services/api';
 
 export default function AdminCalendarView() {
   const [users, setUsers] = useState([]);
@@ -275,8 +275,8 @@ export default function AdminCalendarView() {
                       <div className="flex-1">
                         <p className="text-xs text-slate-500 mb-1 text-center">Ảnh Check-in</p>
                         {selectedDay.record.checkInPhoto ? (
-                          <button type="button" onClick={() => setLightboxImage(`http://localhost:5000${selectedDay.record.checkInPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
-                            <img src={`http://localhost:5000${selectedDay.record.checkInPhoto}`} alt="Check-in" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
+                          <button type="button" onClick={() => setLightboxImage(`${BASE_URL}${selectedDay.record.checkInPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
+                            <img src={`${BASE_URL}${selectedDay.record.checkInPhoto}`} alt="Check-in" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
                           </button>
                         ) : (
                           <div className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
@@ -289,8 +289,8 @@ export default function AdminCalendarView() {
                       <div className="flex-1">
                         <p className="text-xs text-slate-500 mb-1 text-center">Ảnh Check-out</p>
                         {selectedDay.record.checkOutPhoto ? (
-                          <button type="button" onClick={() => setLightboxImage(`http://localhost:5000${selectedDay.record.checkOutPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
-                            <img src={`http://localhost:5000${selectedDay.record.checkOutPhoto}`} alt="Check-out" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
+                          <button type="button" onClick={() => setLightboxImage(`${BASE_URL}${selectedDay.record.checkOutPhoto}`)} className="block w-full rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in group">
+                            <img src={`${BASE_URL}${selectedDay.record.checkOutPhoto}`} alt="Check-out" className="w-full h-32 object-cover group-hover:scale-105 transition-transform" />
                           </button>
                         ) : (
                           <div className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
