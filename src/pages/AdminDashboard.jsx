@@ -162,54 +162,54 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-2 md:gap-6">
           {/* Stat Card 1 */}
-          <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 group hover:shadow-md transition-shadow">
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <Users className="w-24 h-24 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-indigo-50 dark:bg-indigo-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="relative z-10 flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+                <div className="p-1.5 md:p-3 bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 rounded-lg md:rounded-2xl">
+                  <Users className="w-4 h-4 md:w-6 md:h-6" />
+                </div>
+                <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Nhân Sự</h3>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Tổng số nhân sự</p>
-              <h3 className="text-4xl font-bold text-slate-900 dark:text-white mt-1">{stats.totalUsers}</h3>
+              <p className="text-base md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{stats.totalUsers}</p>
             </div>
           </div>
 
           {/* Stat Card 2 */}
-          <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 group hover:shadow-md transition-shadow">
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <TrendingUp className="w-24 h-24 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center mb-4">
-                <TrendingUp className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-emerald-50 dark:bg-emerald-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="relative z-10 flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+                <div className="p-1.5 md:p-3 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-lg md:rounded-2xl">
+                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6" />
+                </div>
+                <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Đang Làm</h3>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Đang làm việc hôm nay</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-4xl font-bold text-slate-900 dark:text-white">{stats.workingToday}</h3>
-                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">/{stats.totalUsers}</span>
+              <div className="flex items-baseline gap-1">
+                <p className="text-base md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{stats.workingToday}</p>
+                <span className="text-[10px] md:text-sm font-medium text-emerald-600 dark:text-emerald-400">/{stats.totalUsers}</span>
               </div>
             </div>
           </div>
 
           {/* Stat Card 3 */}
-          <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 group hover:shadow-md transition-shadow">
-            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <AlertCircle className="w-24 h-24 text-rose-600 dark:text-rose-400" />
-            </div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4">
-                <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="relative z-10 flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+                <div className="p-1.5 md:p-3 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 rounded-lg md:rounded-2xl">
+                  <AlertCircle className="w-4 h-4 md:w-6 md:h-6" />
+                </div>
+                <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Vắng/Trễ</h3>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Vắng / Đi trễ</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-4xl font-bold text-slate-900 dark:text-white">{Math.max(0, stats.totalUsers - stats.workingToday)}</h3>
-                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">vắng</span>
-                <span className="text-sm font-medium text-rose-500 mx-1">•</span>
-                <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.lateToday}</h3>
-                <span className="text-sm font-medium text-rose-500/80">trễ</span>
+              <div className="flex items-baseline gap-1">
+                <p className="text-base md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{Math.max(0, stats.totalUsers - stats.workingToday)}</p>
+                <span className="text-[10px] md:text-sm font-medium text-slate-500 dark:text-slate-400">v</span>
+                <span className="text-[8px] md:text-sm text-rose-500">•</span>
+                <p className="text-sm md:text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.lateToday}</p>
+                <span className="text-[10px] md:text-sm font-medium text-rose-500/80">t</span>
               </div>
             </div>
           </div>
@@ -255,7 +255,75 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="md:hidden p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/10">
+            {loading ? (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+                <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-600 rounded-full animate-spin"></div>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Đang tải dữ liệu...</p>
+              </div>
+            ) : filteredData.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center border border-slate-200/60 dark:border-slate-800 shadow-sm text-center">
+                <Calendar className="w-12 h-12 mb-3 opacity-20 text-slate-400 mx-auto" />
+                <p className="font-medium text-lg text-slate-500 dark:text-slate-400">Chưa có dữ liệu</p>
+              </div>
+            ) : (
+              currentData.map((record) => (
+                <div key={record.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/60 dark:border-slate-800">
+                  <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0">
+                        {getEmployeeName(record.userName).charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">{getEmployeeName(record.userName)}</div>
+                        <div className="text-[10px] text-slate-500">{new Date(record.date).toLocaleDateString('vi-VN')}</div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 ml-2">
+                       {!record.checkOutTimeMillis ? (
+                         <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50">Đang làm</span>
+                       ) : record.totalHours >= 8 ? (
+                         <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/50">Hoàn thành</span>
+                       ) : (
+                         <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50">Thiếu giờ</span>
+                       )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                     <div className="flex items-center gap-2">
+                       <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
+                         <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                       </div>
+                       <div>
+                         <div className="text-[10px] text-slate-500 font-medium">VÀO CA</div>
+                         <div className="font-bold text-sm text-emerald-700 dark:text-emerald-400">{formatTime(record.checkInTimeMillis)}</div>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
+                         <Clock className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                       </div>
+                       <div>
+                         <div className="text-[10px] text-slate-500 font-medium">TAN CA</div>
+                         <div className="font-bold text-sm text-rose-700 dark:text-rose-400">{formatTime(record.checkOutTimeMillis)}</div>
+                       </div>
+                     </div>
+                  </div>
+
+                  {(record.late_minutes > 0 || record.early_leave_minutes > 0 || record.overtime_hours > 0) && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      {record.late_minutes > 0 && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600">Trễ {record.late_minutes}p</span>}
+                      {record.early_leave_minutes > 0 && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-600">Sớm {record.early_leave_minutes}p</span>}
+                      {record.overtime_hours > 0 && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-600">OT {record.overtime_hours}h</span>}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
