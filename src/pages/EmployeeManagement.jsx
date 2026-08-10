@@ -139,8 +139,8 @@ export default function EmployeeManagement() {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="relative w-full md:w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+            <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
@@ -163,7 +163,7 @@ export default function EmployeeManagement() {
         {/* User List Grid/Table */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thông tin nhân viên</th>

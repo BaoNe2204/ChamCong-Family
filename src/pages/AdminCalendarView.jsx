@@ -191,13 +191,13 @@ export default function AdminCalendarView() {
             </div>
           )}
           <div className="p-6">
-            <div className="grid grid-cols-7 gap-4 mb-4">
+            <div className="grid grid-cols-7 gap-2 md:gap-4 mb-4">
               {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => (
                 <div key={d} className="text-center font-bold text-sm text-slate-400 dark:text-slate-500 uppercase">{d}</div>
               ))}
             </div>
             
-            <div className="grid grid-cols-7 gap-3">
+            <div className="grid grid-cols-7 gap-1 md:gap-3">
               {days.map((day, idx) => {
                 const record = getDayRecord(day);
                 const isToday = day && year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
@@ -208,7 +208,7 @@ export default function AdminCalendarView() {
                     key={idx}
                     onClick={() => handleDayClick(day)}
                     className={`
-                      relative flex flex-col items-center justify-center p-3 h-24 rounded-2xl border-2 transition-all duration-200
+                      relative flex flex-col items-center justify-center p-1 md:p-3 h-16 md:h-24 rounded-2xl border-2 transition-all duration-200
                       ${day ? 'cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md' : 'border-transparent bg-transparent'}
                       ${day && !isToday ? 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20' : ''}
                       ${isToday ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10' : ''}
@@ -217,7 +217,7 @@ export default function AdminCalendarView() {
                   >
                     {day && (
                       <>
-                        <span className={`text-lg font-bold mb-2 ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                        <span className={`text-sm md:text-lg font-bold mb-1 md:mb-2 ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>
                           {day}
                         </span>
                         

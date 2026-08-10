@@ -207,7 +207,7 @@ export default function AdminPayroll() {
       {/* Payroll Table */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5">
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">Nhân viên</th>
