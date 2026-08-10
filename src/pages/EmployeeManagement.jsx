@@ -160,8 +160,85 @@ export default function EmployeeManagement() {
           </div>
         </div>
 
-        {/* User List Grid/Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4 mt-6">
+          {loading ? (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+              <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-600 rounded-full animate-spin"></div>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Đang tải dữ liệu...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center border border-slate-200/60 dark:border-slate-800 shadow-sm">
+              <Users className="w-12 h-12 mb-3 opacity-20 text-slate-400" />
+              <p className="font-medium text-lg text-slate-500 dark:text-slate-400">Không tìm thấy nhân sự</p>
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div key={user.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-500/20 dark:to-blue-500/20 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold text-lg shadow-sm">
+                      {(user.fullName || user.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 dark:text-slate-100 text-lg">
+                        {user.fullName || 'Chưa cập nhật tên'}
+                      </div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                        ID: {user.id}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                     <span className={`px-2 py-1 text-xs font-bold rounded-md ${
+                        user.role === 'admin' 
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' 
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      }`}>
+                        {user.role === 'admin' ? 'Quản lý' : 'Nhân viên'}
+                     </span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <Mail className="w-4 h-4 text-slate-400" /> {user.email}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <Phone className="w-4 h-4 text-slate-400" /> {user.phone || 'Chưa cập nhật SĐT'}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                     <span className="px-2 py-1 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        {shifts.find(s => s.id === user.shift_id)?.name || 'Chưa gán ca'}
+                     </span>
+                     <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        200.000đ/ca
+                     </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
+                  <button 
+                    onClick={() => handleEdit(user)}
+                    className="flex-1 py-2 text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 rounded-xl font-bold flex items-center justify-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" /> Sửa
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(user.id)}
+                    disabled={user.email === currentUser?.email}
+                    className="flex-1 py-2 text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="w-4 h-4" /> Xoá
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop User List Grid/Table */}
+        <div className="hidden md:block bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
               <thead>
