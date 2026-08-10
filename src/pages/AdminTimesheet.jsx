@@ -139,50 +139,50 @@ export default function AdminTimesheet() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+      <div className="grid grid-cols-3 gap-2 md:gap-6">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10 flex items-center justify-between md:block">
-            <div className="flex items-center gap-3 md:mb-4">
-              <div className="p-2 md:p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-xl md:rounded-2xl">
-                <Users className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 rounded-lg md:rounded-2xl">
+                <Users className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Nhân Sự</h3>
+              <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Nhân Sự</h3>
             </div>
-            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
+            <p className="text-base md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalEmployees}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-purple-50 dark:bg-purple-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10 flex items-center justify-between md:block">
-            <div className="flex items-center gap-3 md:mb-4">
-              <div className="p-2 md:p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-xl md:rounded-2xl">
-                <Clock className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 rounded-lg md:rounded-2xl">
+                <Clock className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Giờ Làm</h3>
+              <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Giờ Làm</h3>
             </div>
-            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
+            <p className="text-base md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{Math.round(stats.totalHours * 10) / 10}h</p>
           </div>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm rounded-xl md:rounded-3xl p-2 md:p-6 relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-16 h-16 md:w-24 md:h-24 bg-amber-50 dark:bg-amber-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="relative z-10 flex items-center justify-between md:block">
-            <div className="flex items-center gap-3 md:mb-4">
-              <div className="p-2 md:p-3 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-xl md:rounded-2xl">
-                <CheckSquare className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center">
+            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 mb-1 md:mb-4">
+              <div className="p-1.5 md:p-3 bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 rounded-lg md:rounded-2xl">
+                <CheckSquare className="w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <h3 className="font-bold text-sm md:text-base text-slate-500 dark:text-slate-400">Tổng Công</h3>
+              <h3 className="font-bold text-[9px] md:text-base text-slate-500 dark:text-slate-400 whitespace-nowrap">Tổng Công</h3>
             </div>
-            <p className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalWorkDays} ngày</p>
+            <p className="text-base md:text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.totalWorkDays} ng</p>
           </div>
         </div>
       </div>
 
       {/* Matrix Table */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800">
