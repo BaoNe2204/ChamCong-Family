@@ -180,8 +180,65 @@ export default function AdminTimesheet() {
         </div>
       </div>
 
-      {/* Matrix Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+      {/* Mobile Card View (No Horizontal Scroll) */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+            <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Đang tải dữ liệu...</p>
+          </div>
+        ) : timesheetData.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 flex flex-col items-center justify-center border border-slate-200/60 dark:border-slate-800 shadow-sm">
+            <CalendarIcon className="w-12 h-12 mb-3 opacity-20 text-slate-400" />
+            <p className="font-medium text-lg text-slate-500 dark:text-slate-400">Không có dữ liệu chấm công</p>
+          </div>
+        ) : (
+          timesheetData.map(record => (
+            <div key={record.userId} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/60 dark:border-slate-800">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{record.fullName || 'Chưa cập nhật'}</div>
+                  <div className="text-[10px] text-slate-500">{record.email}</div>
+                </div>
+                <div className="flex gap-2 text-center">
+                  <div className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg px-2 py-1">
+                    <div className="text-[9px] uppercase font-bold">Công</div>
+                    <div className="font-black text-sm">{record.totalWorkDays}</div>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg px-2 py-1">
+                    <div className="text-[9px] uppercase font-bold">Giờ</div>
+                    <div className="font-black text-sm">{Math.round(record.totalHours * 10) / 10}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 31 days grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {daysArray.map((dateStr, index) => {
+                  const dayData = record.days[dateStr];
+                  const isWeekend = new Date(dateStr).getDay() === 0 || new Date(dateStr).getDay() === 6;
+                  const dayNum = index + 1;
+                  const hasData = dayData && dayData.totalHours > 0;
+                  
+                  return (
+                    <div key={index} className={`flex flex-col items-center justify-center py-1.5 rounded-md border ${hasData ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800/50' : isWeekend ? 'bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-800' : 'border-slate-100 dark:border-slate-800'}`}>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 leading-none mb-1">{dayNum}</span>
+                      {hasData ? (
+                        <span className={`text-[11px] font-bold leading-none ${!dayData.isValid ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`}>{Math.round(dayData.totalHours * 10) / 10}</span>
+                      ) : (
+                        <span className="text-[10px] text-slate-300 dark:text-slate-600 leading-none">-</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Matrix Table (Desktop Only) */}
+      <div className="hidden md:block bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 overflow-hidden">
         <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
             <thead>
