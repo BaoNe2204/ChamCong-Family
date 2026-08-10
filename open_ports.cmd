@@ -17,6 +17,10 @@ echo Mo cong 4173 cho Frontend Preview...
 netsh advfirewall firewall add rule name="ChamCong Frontend Preview (4173)" dir=in action=allow protocol=TCP localport=4173
 echo.
 
+echo Mo cong 8081 cho Expo Mobile...
+netsh advfirewall firewall add rule name="ChamCong Expo (8081)" dir=in action=allow protocol=TCP localport=8081
+echo.
+
 echo =========================================
 echo ✅ Da mo port thanh cong tren Firewall cua Windows VPS!
 echo =========================================
