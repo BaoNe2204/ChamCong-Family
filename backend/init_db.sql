@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   role ENUM('admin', 'employee') DEFAULT 'employee',
   shift_id VARCHAR(50) DEFAULT 'shift_1',
   hourlyRate INT DEFAULT 25000,
+  pushToken VARCHAR(255),
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
