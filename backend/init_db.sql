@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS attendance (
   early_leave_minutes INT DEFAULT 0,
   status ENUM('PRESENT', 'LATE', 'EARLY_LEAVE', 'ABSENT', 'OT', 'LEAVE', 'FORGOT_CHECKOUT') DEFAULT 'PRESENT',
   isValidShift BOOLEAN DEFAULT TRUE,
+  checkInPhoto TEXT,
+  checkOutPhoto TEXT,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -41,6 +43,8 @@ CREATE TABLE IF NOT EXISTS requests (
   reason TEXT NOT NULL,
   status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
   adminNote TEXT,
+  targetUserId VARCHAR(255),
+  targetUserName VARCHAR(255),
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -58,6 +62,16 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE TABLE IF NOT EXISTS settings (
   setting_key VARCHAR(100) PRIMARY KEY,
   setting_value JSON NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS daily_shifts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId VARCHAR(255) NOT NULL,
+  date DATE NOT NULL,
+  shift_id VARCHAR(50) NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_daily_shift (userId, date),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS payroll_adjustments (
