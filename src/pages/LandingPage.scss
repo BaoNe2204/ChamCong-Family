@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
   --primary: #2563eb;
@@ -1249,33 +1249,32 @@ h1 {
   .contact-form {
     padding: 24px;
   }
-}
 
-    /* Additional Mobile Fixes */
-    .hero-text h1 {
-      font-size: 2.2rem !important; /* Smaller for strict mobile widths */
-      line-height: 1.3 !important;
-    }
-    .typewriter {
-      white-space: pre-wrap !important; /* Allow wrapping if absolutely necessary */
-      word-break: break-word;
-    }
-    .hero-actions {
-      flex-direction: column !important; /* Stack buttons vertically */
-      gap: 15px !important;
-      width: 100%;
-    }
-    .hero-actions .btn {
-      width: 100%; /* Full width buttons on mobile */
-    }
-    /* Fix the text p width */
-    .hero-text p {
-      max-width: 100%;
-      padding: 0 10px;
-    }
-    body, .landing-page-root {
-      overflow-x: hidden;
-    }
+  /* Additional Mobile Fixes */
+  .hero-text h1 {
+    font-size: 2.2rem !important;
+    line-height: 1.3 !important;
+  }
+  .typewriter {
+    white-space: pre-wrap !important;
+    word-break: break-word;
+  }
+  .hero-actions {
+    flex-direction: column !important;
+    gap: 15px !important;
+    width: 100%;
+  }
+  .hero-actions .btn {
+    width: 100%;
+  }
+  .hero-text p {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+  body, .landing-page-root {
+    overflow-x: hidden;
+  }
+}
 
 /* Mobile Navigation Styles */
 .mobile-menu-btn {
@@ -1325,122 +1324,111 @@ h1 {
   .mobile-menu-btn {
     display: flex;
   }
+
+  /* Hide brooms on mobile only */
+  .hero-image-wrapper {
+    display: none !important;
+  }
+
+  /* Make contact buttons compact for mobile */
+  .contact-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+  }
+  .contact-btn {
+    padding: 20px 10px !important;
+    border-radius: 20px !important;
+    gap: 10px !important;
+  }
+  .contact-btn .icon-circle {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  .contact-btn .icon-circle svg {
+    width: 24px;
+    height: 24px;
+  }
+  .contact-btn h3 {
+    font-size: 1.1rem !important;
+  }
+  .contact-btn span {
+    font-size: 0.85rem !important;
+  }
+
+  /* Stats 2x2 grid on mobile */
+  .stats-glass-card {
+    grid-template-columns: 1fr 1fr !important;
+    padding: 20px !important;
+    gap: 15px !important;
+  }
+  .stat-item-modern {
+    gap: 5px;
+  }
+  .stat-icon {
+    width: 45px !important;
+    height: 45px !important;
+    padding: 10px !important;
+    margin-bottom: 5px !important;
+  }
+  .stat-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  .stat-number-modern {
+    font-size: 1.8rem !important;
+    margin-bottom: 2px !important;
+  }
+  .stat-label-modern {
+    font-size: 0.85rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Compress Feature Cards on Mobile */
+  .features {
+    padding: 60px 0 !important;
+  }
+  .feature-card {
+    padding: 25px 20px !important;
+    border-radius: 20px !important;
+  }
+  .feature-card .icon-box {
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 15px !important;
+  }
+  .feature-card .icon-box svg {
+    width: 28px;
+    height: 28px;
+  }
+  .feature-card h3 {
+    font-size: 1.3rem !important;
+    margin-bottom: 10px !important;
+  }
+  .feature-card p {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Hero stats 2x2 grid on mobile */
+  .hero-content .stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+    margin-top: 30px !important;
+  }
+  .hero-content .stat-item {
+    padding: 15px !important;
+    gap: 5px !important;
+  }
+  .hero-content .stat-item h4 {
+    font-size: 2rem !important;
+    margin: 0 !important;
+  }
+  .hero-content .stat-item p {
+    font-size: 0.8rem !important;
+  }
 }
 
-    /* Fix 4 brooms overflow on mobile */
-    .hero-image-wrapper {
-      overflow: hidden;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
-    .hero-image-wrapper .hero-card {
-      transform: scale(0.6);
-      transform-origin: top center;
-      margin-bottom: -200px !important;
-    }
 
-    /* User requested mobile overrides */
-    .hero-image-wrapper {
-      display: none !important; /* Hide brooms entirely on mobile */
-    }
-    
-    /* Make contact buttons compact and standard for mobile */
-    .contact-grid {
-      grid-template-columns: 1fr 1fr !important;
-      gap: 15px !important;
-    }
-    .contact-btn {
-      padding: 20px 10px !important;
-      border-radius: 20px !important;
-      gap: 10px !important;
-    }
-    .contact-btn .icon-circle {
-      width: 50px !important;
-      height: 50px !important;
-    }
-    .contact-btn .icon-circle svg {
-      width: 24px;
-      height: 24px;
-    }
-    .contact-btn h3 {
-      font-size: 1.1rem !important;
-    }
-    .contact-btn span {
-      font-size: 0.85rem !important;
-    }
 
-    /* Fix Stats section on mobile to be a 2x2 grid */
-    .stats-glass-card {
-      grid-template-columns: 1fr 1fr !important;
-      padding: 20px !important;
-      gap: 15px !important;
-    }
-    .stat-item-modern {
-      gap: 5px;
-    }
-    .stat-icon {
-      width: 45px !important;
-      height: 45px !important;
-      padding: 10px !important;
-      margin-bottom: 5px !important;
-    }
-    .stat-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-    .stat-number-modern {
-      font-size: 1.8rem !important;
-      margin-bottom: 2px !important;
-    }
-    .stat-label-modern {
-      font-size: 0.85rem !important;
-      line-height: 1.3 !important;
-    }
-
-    /* Compress Feature Cards on Mobile */
-    .features {
-      padding: 60px 0 !important;
-    }
-    .feature-card {
-      padding: 25px 20px !important;
-      border-radius: 20px !important;
-    }
-    .feature-card .icon-box {
-      width: 60px !important;
-      height: 60px !important;
-      margin-bottom: 15px !important;
-    }
-    .feature-card .icon-box svg {
-      width: 28px;
-      height: 28px;
-    }
-    .feature-card h3 {
-      font-size: 1.3rem !important;
-      margin-bottom: 10px !important;
-    }
-    .feature-card p {
-      font-size: 0.95rem !important;
-      line-height: 1.5 !important;
-    }
-
-    /* Fix the .stats block in hero on mobile */
-    .hero-content .stats {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 15px !important;
-      margin-top: 30px !important;
-    }
-    .hero-content .stat-item {
-      padding: 15px !important;
-      gap: 5px !important;
-    }
-    .hero-content .stat-item h4 {
-      font-size: 2rem !important;
-      margin: 0 !important;
-    }
-    .hero-content .stat-item p {
-      font-size: 0.8rem !important;
-    }
-}
-
+} /* End of .landing-page-root */
