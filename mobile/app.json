@@ -10,15 +10,22 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.chamcong.app",
-      "usesCleartextTraffic": true
+      "package": "com.chamcong.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-status-bar",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

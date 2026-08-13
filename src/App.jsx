@@ -35,6 +35,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminCalendarView from './pages/AdminCalendarView';
 import AdminPayroll from './pages/AdminPayroll';
 import AdminTimesheet from './pages/AdminTimesheet';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
@@ -43,8 +44,11 @@ function App() {
         {/* Trang đăng nhập */}
         <Route path="/login" element={<Login />} />
         
-        {/* Chuyển hướng thư mục gốc */}
-        <Route path="/" element={<Navigate to="/employee" replace />} />
+        {/* Chuyển hướng thư mục gốc về Đăng nhập (theo yêu cầu) */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Landing Page Route */}
+        <Route path="/trang-chu" element={<LandingPage />} />
         
         {/* Route dành cho nhân viên (cần đăng nhập) */}
         <Route path="/employee" element={<PrivateRoute><EmployeeLayout /></PrivateRoute>}>
