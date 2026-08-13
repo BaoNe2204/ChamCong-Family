@@ -16,6 +16,9 @@ dist-ssr
 backend/public/uploads
 backend/uploads
 
+# Mobile assets (Google Maps cache files with long filenames)
+mobile/assets/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
