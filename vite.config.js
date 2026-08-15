@@ -12,10 +12,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.jpg'],
       manifest: {
-        name: 'ChamCong Family',
-        short_name: 'Chấm Công',
-        description: 'Hệ thống điểm danh thông minh cho xưởng gia đình',
-        theme_color: '#3b82f6',
+        name: 'Cán Chổi Nhựa Thúy Kiều',
+        short_name: 'Thúy Kiều',
+        description: 'Xưởng sản xuất Cán Chổi Nhựa Thúy Kiều - Chuyên phân phối sỉ lẻ cán chổi nhựa PP nguyên sinh.',
+        theme_color: '#2563eb',
+        background_color: '#ffffff',
+        display: 'standalone',
         icons: [
           {
             src: 'logo.jpg',

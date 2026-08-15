@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Menu, MapPin, Mail, ArrowRight, ShieldCheck, Factory, Truck, Star, Send, Moon, Sun, Globe, MessageCircle, CheckCircle, ChevronDown, ChevronUp, Award, Package, Users } from 'lucide-react';
+import { Phone, Menu, MapPin, Mail, ArrowRight, ShieldCheck, Factory, Truck, Star, Send, Moon, Sun, Globe, MessageCircle, CheckCircle, ChevronDown, ChevronUp, Award, Package, Users, Sparkles, Leaf } from 'lucide-react';
 import './LandingPage.scss';
 
 // 3D Interactive Product Viewer
@@ -152,7 +152,23 @@ const TypewriterText = ({ text }) => {
   return <span className="typewriter">{displayedText}</span>;
 };
 
+const FallingEffects = () => {
+  return (
+    <div className="falling-container">
+      {[...Array(15)].map((_, i) => (
+        <div key={i} className={`falling-item delay-${i % 5} type-${i % 3}`} style={{ left: `${Math.random() * 95}%` }}>
+          {i % 3 === 0 ? <Star size={16} /> : i % 3 === 1 ? <Sparkles size={16} /> : <Leaf size={16} />}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 function LandingPage() {
+  useEffect(() => {
+    document.title = "Cán Chổi Nhựa Thúy Kiều - Sản xuất & Phân phối toàn quốc";
+  }, []);
+
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState('light');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -181,7 +197,7 @@ function LandingPage() {
       });
     }, { threshold: 0.1 });
 
-    document.querySelectorAll('.reveal').forEach((el) => {
+    document.querySelectorAll('.reveal, .reveal-drop').forEach((el) => {
       observer.observe(el);
     });
 
@@ -194,8 +210,10 @@ function LandingPage() {
   useEffect(() => {
     if (theme === 'dark') {
       document.body.classList.add('dark');
+      document.body.style.backgroundColor = '#0f172a';
     } else {
       document.body.classList.remove('dark');
+      document.body.style.backgroundColor = '#f8fafc';
     }
   }, [theme]);
 
@@ -249,6 +267,7 @@ function LandingPage() {
 
   return (
     <div className="landing-page-root">
+      <FallingEffects />
       <div className="scroll-progress-container">
         <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }}></div>
       </div>
@@ -331,6 +350,27 @@ function LandingPage() {
 
         <div className="container hero-grid" style={{ position: 'relative', zIndex: 1 }}>
           <div className="hero-text reveal">
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '8px 18px',
+              background: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '100px',
+              marginBottom: '24px',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
+            }}>
+              <a href="tel:0907240127" style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', color: 'var(--primary)', fontWeight: '700', textDecoration: 'none'}}>
+                <Phone size={16} /> 0907 240 127 - 0914 240 129
+              </a>
+              <div style={{width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', opacity: 0.4}}></div>
+              <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: '600'}}>
+                <MapPin size={16} color="var(--primary)" /> Đức Phổ, Quảng Ngãi
+              </div>
+            </div>
             <h1>Sản xuất<br/> <TypewriterText text="Cán Chổi Nhựa" /><br/>Chuẩn Cao Cấp</h1>
             <p>
               Cơ sở Thúy Kiều tự hào là nhà cung cấp sỉ cán chổi nhựa uy tín với dây chuyền hiện đại. Chúng tôi mang đến sản phẩm độ bền tuyệt đối với mức giá xuất xưởng tốt nhất cho đối tác toàn quốc.
@@ -580,37 +620,37 @@ function LandingPage() {
             <p>Chọn phương thức liên lạc tiện lợi nhất cho bạn để nhận ngay báo giá sỉ cực sốc.</p>
           </div>
 
-          <div className="contact-grid reveal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '50px' }}>
-            <a href="tel:0905123456" className="contact-btn ripple-btn phone" onClick={createRipple}>
+          <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '50px' }}>
+            <a href="tel:0907240127" className="contact-btn ripple-btn phone reveal-drop" style={{ transitionDelay: '0s' }} onClick={createRipple}>
               <div className="icon-circle">
-                <Phone size={36} />
+                <Phone size={28} />
               </div>
               <h3>Gọi Điện Thoại</h3>
-              <span>0905 123 456</span>
+              <span>0907 240 127 - 0914 240 129</span>
             </a>
 
-            <a href="https://zalo.me/0905123456" target="_blank" rel="noreferrer" className="contact-btn ripple-btn zalo" onClick={createRipple}>
+            <a href="https://zalo.me/0914240129" target="_blank" rel="noreferrer" className="contact-btn ripple-btn zalo reveal-drop" style={{ transitionDelay: '0.15s' }} onClick={createRipple}>
               <div className="icon-circle">
-                <MessageCircle size={36} />
+                <MessageCircle size={28} />
               </div>
               <h3>Chat Zalo</h3>
-              <span>0905 123 456</span>
+              <span>0914 240 129</span>
             </a>
 
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="contact-btn ripple-btn fb" onClick={createRipple}>
+            <a href="https://www.facebook.com/thuy.kieu.345636" target="_blank" rel="noreferrer" className="contact-btn ripple-btn fb reveal-drop" style={{ transitionDelay: '0.3s' }} onClick={createRipple}>
               <div className="icon-circle">
-                <Globe size={36} />
+                <Globe size={28} />
               </div>
               <h3>Facebook</h3>
-              <span>Cơ Sở Thúy Kiều</span>
+              <span>Thúy Kiều</span>
             </a>
 
-            <a href="mailto:lienhe@choinhuathuykieu.com" className="contact-btn ripple-btn mail" onClick={createRipple}>
+            <a href="mailto:minhtenbao24@gmail.com" className="contact-btn ripple-btn mail reveal-drop" style={{ transitionDelay: '0.45s' }} onClick={createRipple}>
               <div className="icon-circle">
-                <Mail size={36} />
+                <Mail size={28} />
               </div>
               <h3>Gửi Email</h3>
-              <span>lienhe@...</span>
+              <span>minhtenbao24@gmail.com</span>
             </a>
           </div>
 
@@ -680,9 +720,9 @@ function LandingPage() {
               </a>
               <p className="footer-desc">Đơn vị chuyên sản xuất và phân phối sỉ cán chổi nhựa nguyên sinh 100% lớn nhất khu vực. Uy tín tạo nên thương hiệu.</p>
               <div className="social-links">
-                <a href="https://facebook.com" target="_blank" rel="noreferrer"><Globe size={20}/></a>
-                <a href="https://zalo.me/0905123456" target="_blank" rel="noreferrer"><MessageCircle size={20}/></a>
-                <a href="mailto:lienhe@choinhuathuykieu.com"><Mail size={20}/></a>
+                <a href="https://www.facebook.com/thuy.kieu.345636" target="_blank" rel="noreferrer"><Globe size={20}/></a>
+                <a href="https://zalo.me/0914240129" target="_blank" rel="noreferrer"><MessageCircle size={20}/></a>
+                <a href="mailto:minhtenbao24@gmail.com"><Mail size={20}/></a>
               </div>
             </div>
 
@@ -702,8 +742,8 @@ function LandingPage() {
               <h3>Thông Tin Liên Hệ</h3>
               <ul className="contact-info-list">
                 <li><MapPin size={18} className="info-icon" /> <span>Trà Câu, Đức Phổ, Quảng Ngãi</span></li>
-                <li><Phone size={18} className="info-icon" /> <span>0905 123 456 (Zalo Chăm Sóc Sỉ)</span></li>
-                <li><Mail size={18} className="info-icon" /> <span>lienhe@choinhuathuykieu.com</span></li>
+                <li><Phone size={18} className="info-icon" /> <span>0907 240 127 - 0914 240 129</span></li>
+                <li><Mail size={18} className="info-icon" /> <span>minhtenbao24@gmail.com</span></li>
               </ul>
             </div>
           </div>
