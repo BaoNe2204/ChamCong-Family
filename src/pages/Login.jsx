@@ -24,7 +24,7 @@ export default function Login() {
       if (user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/employee');
       }
     } catch (err) {
       setError(err.message || 'Sai email hoặc mật khẩu. Vui lòng thử lại!');
