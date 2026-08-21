@@ -35,6 +35,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminCalendarView from './pages/AdminCalendarView';
 import AdminPayroll from './pages/AdminPayroll';
 import AdminTimesheet from './pages/AdminTimesheet';
+import AdminOvertime from './pages/AdminOvertime';
 import LandingPage from './pages/LandingPage';
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
           <Route path="shifts" element={<ShiftCrud />} />
           <Route path="calendar" element={<AdminCalendarView />} />
           <Route path="timesheet" element={<AdminTimesheet />} />
+          <Route path="overtime" element={<AdminOvertime />} />
           <Route path="payroll" element={<AdminPayroll />} />
           <Route path="requests" element={<RequestManagement />} />
         </Route>

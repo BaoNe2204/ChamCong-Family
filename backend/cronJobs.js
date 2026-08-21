@@ -17,7 +17,7 @@ const setupCronJobs = (pool) => {
   // Run every 5 minutes
   cron.schedule('*/5 * * * *', async () => {
     try {
-      console.log('Running cron job to check attendance...');
+      // Cron job runs silently in background
       
       const now = new Date();
       // Adjust to UTC+7 (Vietnam time)
@@ -83,7 +83,7 @@ const setupCronJobs = (pool) => {
   // Run daily at 2:00 AM to delete old photos (older than 60 days)
   cron.schedule('0 2 * * *', () => {
     try {
-      console.log('Running cron job to clean up old photos...');
+      // Photo cleanup runs silently in background
       const uploadsDir = path.join(__dirname, 'public/uploads');
       if (!fs.existsSync(uploadsDir)) return;
 

@@ -231,26 +231,26 @@ export default function AdminPayroll() {
               
               <div className="grid grid-cols-2 gap-2 mb-4">
                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Lương/Ca</div>
-                   <div className="font-bold text-sm">{formatMoney(record.baseSalary)}</div>
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Đơn giá / Buổi</div>
+                   <div className="font-bold text-sm">{formatMoney(record.shiftRate || 200000)}</div>
                  </div>
                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Tổng công</div>
-                   <div className="font-bold text-sm text-blue-600 dark:text-blue-400">{record.totalWorkDays} <span className="text-xs font-normal text-slate-500">ng</span></div>
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Số công (Buổi)</div>
+                   <div className="font-bold text-sm text-blue-600 dark:text-blue-400">{record.validDays !== undefined ? record.validDays : record.totalDays} <span className="text-xs font-normal text-slate-500">công</span></div>
                  </div>
                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Giờ Cơ Bản</div>
-                   <div className="font-bold text-sm">{Math.round(record.totalHours * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
+                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Tổng Giờ Làm</div>
+                   <div className="font-bold text-sm">{Math.round((record.totalHours || record.baseHours || 0) * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
                  </div>
                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
                    <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Giờ OT</div>
-                   <div className="font-bold text-sm text-purple-600 dark:text-purple-400">{Math.round(record.overtimeHours * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
+                   <div className="font-bold text-sm text-purple-600 dark:text-purple-400">{Math.round((record.overtimeHours || 0) * 10) / 10} <span className="text-xs font-normal text-slate-500">h</span></div>
                  </div>
               </div>
               
               <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">TỔNG LƯƠNG</span>
-                 <span className="text-lg font-black text-emerald-700 dark:text-emerald-300 drop-shadow-sm">{formatMoney(record.totalSalary)}</span>
+                 <span className="text-lg font-black text-emerald-700 dark:text-emerald-300 drop-shadow-sm">{formatMoney(record.salary)}</span>
               </div>
             </div>
           ))
@@ -264,10 +264,10 @@ export default function AdminPayroll() {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5">
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">Nhân viên</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Lương / Ca</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Tổng công</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Giờ Cơ Bản</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Giờ OT</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Đơn giá / Buổi</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Số công (Buổi)</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Tổng Giờ Làm</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Giờ OT (Tăng ca)</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-right">Tổng Lương</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">Hành động</th>
               </tr>
@@ -304,13 +304,13 @@ export default function AdminPayroll() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 text-xs font-bold border border-indigo-100 dark:border-indigo-500/20">
-                        200.000đ
+                      <span className="inline-flex px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 text-xs font-bold border border-indigo-100 dark:border-indigo-500/20">
+                        {formatMoney(record.shiftRate || 200000)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">{record.totalDays} ngày</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{record.validDays !== undefined ? record.validDays : record.totalDays} công</span>
                         {record.errorDays > 0 && (
                           <span className="text-xs font-bold text-rose-500 flex items-center gap-1 bg-rose-50 px-1.5 py-0.5 rounded-md" title={`${record.errorDays} ngày lỗi (thiếu giờ)`}>
                             <AlertTriangle className="w-3 h-3" /> {record.errorDays}
@@ -324,7 +324,7 @@ export default function AdminPayroll() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-slate-700 dark:text-slate-300">
-                      {record.baseHours || 0}h
+                      {record.totalHours || record.baseHours || 0}h
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-500/5">
                       {record.overtimeHours || 0}h

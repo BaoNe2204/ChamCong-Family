@@ -17,7 +17,8 @@ import {
   DollarSign,
   ClipboardList,
   Moon,
-  Sun
+  Sun,
+  Zap
 } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 
@@ -43,6 +44,7 @@ export default function AdminLayout() {
     { path: '/admin/shifts', icon: Clock, label: 'Quản lý ca' },
     { path: '/admin/calendar', icon: CalendarDays, label: 'Lịch sử chấm công' },
     { path: '/admin/timesheet', icon: ClipboardList, label: 'Bảng Chấm Công' },
+    { path: '/admin/overtime', icon: Zap, label: 'Quản lý tăng ca' },
     { path: '/admin/payroll', icon: DollarSign, label: 'Bảng Lương' },
     { path: '/admin/settings', icon: Settings, label: 'Cài đặt' },
   ];

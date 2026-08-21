@@ -808,13 +808,15 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
   try {
     const { month, year } = req.params;
     
-    // Get settings for otMultiplier
+    // Get settings for otMultiplier & shiftRate
     const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
     let otMultiplier = 1.5;
+    let shiftRate = 200000; // 1 buổi/ca = 1 công = 200.000 VNĐ
     if (settingRows.length > 0) {
       try {
         const settings = JSON.parse(settingRows[0].setting_value);
         if (settings.otMultiplier) otMultiplier = parseFloat(settings.otMultiplier);
+        if (settings.shiftRate) shiftRate = parseFloat(settings.shiftRate);
       } catch(e) {}
     }
 
@@ -829,7 +831,6 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
     
     // Get all attendance records for the month
     const startDate = `${year}-${month.padStart(2, '0')}-01`;
-    // Last day of month
     const endDateObj = new Date(year, month, 0);
     const endDate = `${year}-${month.padStart(2, '0')}-${endDateObj.getDate().toString().padStart(2, '0')}`;
     
@@ -838,35 +839,37 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
       [startDate, endDate]
     );
 
-    // Calculate payroll for each user
+    // Calculate payroll for each user based on sessions (1 buổi = 1 công)
     const payrollList = users.map(user => {
       const userRecords = attendance.filter(a => a.userId === user.id);
       
       const daysMap = {};
+      let totalValidSessions = 0;
+      let totalHours = 0;
+      let autoOtHours = 0;
+      let errorDays = 0;
+
       userRecords.forEach(record => {
          const d = typeof record.date === 'string' ? record.date : record.date.toISOString().split('T')[0];
          if (!daysMap[d]) {
-            daysMap[d] = { totalHours: 0, overtimeHours: 0, isValid: true };
+            daysMap[d] = { totalHours: 0, overtimeHours: 0, isValid: true, count: 0 };
          }
          daysMap[d].totalHours += parseFloat(record.totalHours || 0);
          daysMap[d].overtimeHours += parseFloat(record.overtime_hours || 0);
-         if (!record.isValidShift) daysMap[d].isValid = false;
+         daysMap[d].count += 1;
+         
+         if (record.isValidShift) {
+           totalValidSessions += 1; // Mỗi ca/buổi hợp lệ = 1 công
+         } else {
+           daysMap[d].isValid = false;
+           errorDays += 1;
+         }
+
+         totalHours += parseFloat(record.totalHours || 0);
+         autoOtHours += parseFloat(record.overtime_hours || 0);
       });
 
       const totalDays = Object.keys(daysMap).length;
-      let totalHours = 0;
-      let overtimeHours = 0;
-      let validDays = 0;
-      let errorDays = 0;
-      
-      Object.values(daysMap).forEach(day => {
-        totalHours += day.totalHours;
-        overtimeHours += day.overtimeHours;
-        if (day.isValid) validDays++;
-        else errorDays++;
-      });
-      
-      const baseHours = Math.max(0, totalHours - overtimeHours);
       
       const userAdj = adjustments.find(adj => adj.userId === user.id) || {};
       const manualOtHours = parseFloat(userAdj.manualOtHours || 0);
@@ -874,11 +877,11 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
       const penalty = parseInt(userAdj.penalty || 0);
       const finalHourlyRate = userAdj.hourlyRate !== undefined && userAdj.hourlyRate !== null ? userAdj.hourlyRate : (user.hourlyRate || 0);
       
-      const finalOvertimeHours = overtimeHours + manualOtHours;
+      const finalOvertimeHours = autoOtHours + manualOtHours;
       
-      const shiftRate = 200000;
+      // 1 Buổi (Công) = shiftRate (200.000đ)
       const computedHourlyRate = shiftRate / 8;
-      const baseSalary = validDays * shiftRate;
+      const baseSalary = totalValidSessions * shiftRate;
       const otSalary = finalOvertimeHours * computedHourlyRate * otMultiplier;
       const totalSalary = baseSalary + otSalary + bonus - penalty;
       
@@ -889,10 +892,15 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
         role: user.role,
         hourlyRate: finalHourlyRate,
         totalDays,
-        validDays,
+        totalWorkDays: totalValidSessions, // Số buổi/công làm việc
+        validDays: totalValidSessions,
         errorDays,
-        baseHours: Math.round(baseHours * 10) / 10,
+        totalHours: Math.round(totalHours * 10) / 10,
+        baseHours: Math.round(totalHours * 10) / 10,
         overtimeHours: Math.round(finalOvertimeHours * 10) / 10,
+        autoOtHours: Math.round(autoOtHours * 10) / 10,
+        manualOtHours: Math.round(manualOtHours * 10) / 10,
+        shiftRate,
         baseSalary: Math.round(baseSalary),
         otSalary: Math.round(otSalary),
         bonus,
@@ -902,6 +910,105 @@ app.get('/api/admin/payroll/:month/:year', authenticateToken, isAdmin, async (re
     });
     
     res.json(payrollList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin Overtime management endpoints
+app.get('/api/admin/overtime/:month/:year', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { month, year } = req.params;
+
+    const [settingRows] = await pool.execute('SELECT setting_value FROM settings WHERE setting_key = "general"');
+    let otMultiplier = 1.5;
+    let shiftRate = 200000;
+    if (settingRows.length > 0) {
+      try {
+        const settings = JSON.parse(settingRows[0].setting_value);
+        if (settings.otMultiplier) otMultiplier = parseFloat(settings.otMultiplier);
+        if (settings.shiftRate) shiftRate = parseFloat(settings.shiftRate);
+      } catch(e) {}
+    }
+
+    const [users] = await pool.execute('SELECT id, email, fullName, role FROM users WHERE role != "admin"');
+    const [adjustments] = await pool.execute(
+      'SELECT * FROM payroll_adjustments WHERE month = ? AND year = ?',
+      [month, year]
+    );
+
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDateObj = new Date(year, month, 0);
+    const endDate = `${year}-${month.padStart(2, '0')}-${endDateObj.getDate().toString().padStart(2, '0')}`;
+
+    const [attendance] = await pool.execute(
+      'SELECT userId, overtime_hours FROM attendance WHERE date >= ? AND date <= ? AND checkOutTimeMillis IS NOT NULL',
+      [startDate, endDate]
+    );
+
+    const overtimeList = users.map(user => {
+      const userRecords = attendance.filter(a => a.userId === user.id);
+      let autoOtHours = 0;
+      userRecords.forEach(r => {
+        autoOtHours += parseFloat(r.overtime_hours || 0);
+      });
+
+      const userAdj = adjustments.find(adj => adj.userId === user.id) || {};
+      const manualOtHours = parseFloat(userAdj.manualOtHours || 0);
+      const bonus = parseInt(userAdj.bonus || 0);
+      const penalty = parseInt(userAdj.penalty || 0);
+
+      const totalOtHours = autoOtHours + manualOtHours;
+      const hourlyRateForOt = shiftRate / 8;
+      const estimatedOtPay = totalOtHours * hourlyRateForOt * otMultiplier;
+
+      return {
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName || '',
+        role: user.role,
+        autoOtHours: Math.round(autoOtHours * 10) / 10,
+        manualOtHours: Math.round(manualOtHours * 10) / 10,
+        totalOtHours: Math.round(totalOtHours * 10) / 10,
+        otMultiplier,
+        hourlyRateForOt,
+        estimatedOtPay: Math.round(estimatedOtPay),
+        bonus,
+        penalty
+      };
+    });
+
+    res.json(overtimeList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/overtime/update', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { userId, month, year, manualOtHours, bonus, penalty } = req.body;
+    if (!userId || !month || !year) {
+      return res.status(400).json({ error: "Missing userId, month, or year" });
+    }
+
+    const [existing] = await pool.execute(
+      'SELECT id FROM payroll_adjustments WHERE userId = ? AND month = ? AND year = ?',
+      [userId, month, year]
+    );
+
+    if (existing.length > 0) {
+      await pool.execute(
+        'UPDATE payroll_adjustments SET manualOtHours = ?, bonus = ?, penalty = ? WHERE userId = ? AND month = ? AND year = ?',
+        [manualOtHours || 0, bonus || 0, penalty || 0, userId, month, year]
+      );
+    } else {
+      await pool.execute(
+        'INSERT INTO payroll_adjustments (userId, month, year, manualOtHours, bonus, penalty) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, month, year, manualOtHours || 0, bonus || 0, penalty || 0]
+      );
+    }
+
+    res.json({ message: "Đã cập nhật dữ liệu tăng ca thành công" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
